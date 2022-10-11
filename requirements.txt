@@ -1,0 +1,5 @@
+opencv-python == 4.6.0.66
+faster-fifo
+pynput == 1.7.6
+pytesseract == 0.3.10
+pyttsx3 == 2.90
