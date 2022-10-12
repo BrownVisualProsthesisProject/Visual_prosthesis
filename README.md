@@ -1,43 +1,90 @@
-# Visual_prosthesis
+# Visual prosthesis
 
-YOLOv5 🚀 is a family of object detection architectures and models pretrained on the COCO dataset, and represents <a href="https://ultralytics.com">Ultralytics</a>
-    open-source research into future vision AI methods, incorporating lessons learned and best practices evolved over thousands of hours of research and development.
+This is the new repository of the Intelligent Visual Prosthesis project at Brown University.
+The repository is intended to develop the next release of the Visual Prosthesis and will focus on three
+modules: Object Localization, Object Grasping, and Optical Character Recognition.
+
     
 <details open>
 <summary>Install</summary>
 
-Clone repo and install [requirements.txt](https://github.com/ultralytics/yolov5/blob/master/requirements.txt) in a
-[**Python>=3.7.0**](https://www.python.org/) environment, including
-[**PyTorch>=1.7**](https://pytorch.org/get-started/locally/).
+Clone repo and install [requirements.txt](https://github.com/BrownVisualProsthesisProject/Visual_prosthesis/blob/main/requirements.txt) in a
+[**Python>=3.7.0**](https://www.python.org/) environment.
 
 ```bash
-git clone https://github.com/ultralytics/yolov5  # clone
-cd yolov5
 pip install -r requirements.txt  # install
 ```
 
 </details>
 
 <details open>
-<summary>Inference</summary>
+<summary>Getting Started</summary>
 
-YOLOv5 [PyTorch Hub](https://github.com/ultralytics/yolov5/issues/36) inference. [Models](https://github.com/ultralytics/yolov5/tree/master/models) download automatically from the latest
-YOLOv5 [release](https://github.com/ultralytics/yolov5/releases).
+To run the program use
 
-```python
-import torch
+```bash
 
-# Model
-model = torch.hub.load('ultralytics/yolov5', 'yolov5s')  # or yolov5n - yolov5x6, custom
+python main_subclass.py
 
-# Images
-img = 'https://ultralytics.com/images/zidane.jpg'  # or file, Path, PIL, OpenCV, numpy, list
-
-# Inference
-results = model(img)
-
-# Results
-results.print()  # or .show(), .save(), .crop(), .pandas(), etc.
 ```
 
 </details>
+
+The program will start the keyboard listener to change between modes using the keys '1', '2', and '3' from the keyboard,
+
+
+```python
+def start_key_listener(currentKey):
+    """Keyboard listener."""
+
+    def on_press(key):
+        """Stores selected key."""
+        try:
+            global currentKey
+            currentKey = key.char
+            print("alphanumeric key {0} pressed".format(key.char))
+        except AttributeError:
+            print("special key {0} pressed".format(key))
+
+    listener = keyboard.Listener(on_press=on_press)
+    listener.start()
+    return currentKey
+```
+
+the multiprocessing queues for communication (soon to be changed with ZMQ communication),
+
+```python
+queue = Queue(1000 * 1000)
+processed_queue = Queue(1000 * 1000)
+message_queue = mp.Queue()
+```
+
+the text to voice engine to send sound,
+
+```python
+engine = text2voice()
+```
+
+and the webcam stream that will put frames in the queue variable.
+
+```python
+webcam_stream = WebcamStream(queue, stream_id=0)
+webcam_stream.start()
+```
+
+The current code is working with dummy classes that inherit from multiprocessing.Process class to run the modules as a separate process.
+
+```python
+        # Initialize chosen process.
+        if currentKey == "1":
+            current_stream = Grayscale(queue, processed_queue, message_queue)
+            engine.say("Grasping mode")
+
+        elif currentKey == "2":
+            current_stream = OCR(queue, processed_queue, message_queue)
+            engine.say("Document OCR mode")
+
+        elif currentKey == "3":
+            current_stream = Detector(queue, processed_queue, message_queue)
+            engine.say("Object location mode")
+```
