@@ -9,7 +9,7 @@ modules: Object Localization, Object Grasping, and Optical Character Recognition
 <summary>Install</summary>
 
 Clone repo and install [requirements.txt](https://github.com/BrownVisualProsthesisProject/Visual_prosthesis/blob/main/requirements.txt) in a
-[**Python>=3.7.0**](https://www.python.org/) environment.
+[**Python>=3.7.0**](https://www.python.org/) environment ([venv](https://virtualenv.pypa.io/en/latest/) [poetry](https://python-poetry.org/)).
 
 ```bash
 pip install -r requirements.txt  # install
