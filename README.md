@@ -5,7 +5,7 @@ The repository is intended to develop the next release of the Visual Prosthesis 
 modules: Object Localization, Object Grasping, and Optical Character Recognition.
 
     
-<details open>
+<details close>
 <summary>Install</summary>
 
 Clone repo and install [requirements.txt](https://github.com/BrownVisualProsthesisProject/Visual_prosthesis/blob/main/requirements.txt) in a
@@ -17,7 +17,7 @@ pip install -r requirements.txt  # install
 
 </details>
 
-<details open>
+<details close>
 <summary>Getting Started</summary>
 
 To run the program use
@@ -90,7 +90,7 @@ The current code is working with dummy classes that inherit from multiprocessing
 
 </details>
 
-<details open>
+<details close>
 <summary>Modes</summary>
     
 #### Localization
