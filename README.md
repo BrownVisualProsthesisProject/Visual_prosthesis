@@ -106,14 +106,12 @@ run YoloV5 with pre-trained weights.
 + The module must use an OCR library such as pytesseract of PaddleOCR (pytessearct is already working.)
 + Overall, the module must help the patient to read text (which text? TBD).
 + For instance, if the handwritten text on a piece of paper is the desired text to be read. Then, the module has to detect the piece of paper, cut that part of the image, preprocess the cropped to improve the OCR results, and run the OCR library over that preprocessed cropped image.
-                
+
+
+
+The main goal at this phase is to develop a reliable Manager that can switch (start and kill) between Processes (modes.), while developing each module in parallel (pytesseract, Yolov5, localization...).     
 
 
 </details>
-
-
-<summary>Considerations</summary>
-
-The main goal at this phase is to develop a reliable Manager that can switch (start and kill) between Processes (modes.), while developing each module in parallel (pytesseract, Yolov5, localization...).
 
 
