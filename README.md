@@ -92,6 +92,21 @@ The current code is working with dummy classes that inherit from multiprocessing
 
 <details open>
 <summary>Modes</summary>
+    
+####Localization
++ The module has to use YoloV5 to detect a specific set of everyday use objects TBD. To test the module, it is possible to
+run YoloV5 with pre-trained weights. 
++ The module has to use the Text2Voice module to name the objects in the scene (going from left to right.)
+    
+####Grasping
++ The module has to use YoloV5 to detect a specific set of everyday use objects TBD and the hands of the patient. 
++ The module has to use the Text2Voice module to guide the hand of the patient to touch and grasp the desired object of the specific set of everyday use objects.
+    
+####OCR
++ The module must use an OCR library such as pytesseract of PaddleOCR (pytessearct is already working.)
++ Overall, the module must help the patient to read text (which text? TBD).
++ For instance, if the handwritten text on a piece of paper is the desired text to be read. Then, the module has to detect the piece of paper, cut that part of the image, preprocess the cropped to improve the OCR results, and run the OCR library over that preprocessed cropped image.
+                
 
 
 </details>
@@ -99,7 +114,6 @@ The current code is working with dummy classes that inherit from multiprocessing
 
 <summary>Considerations</summary>
 
-The main goal at this phase is to develop a reliable Manager that can switch (start and kill) between Processes (modes.)
-Developing each module in parallel (pytesseract, Yolov5, localization...) is possible.
+The main goal at this phase is to develop a reliable Manager that can switch (start and kill) between Processes (modes.), while developing each module in parallel (pytesseract, Yolov5, localization...).
 
 
