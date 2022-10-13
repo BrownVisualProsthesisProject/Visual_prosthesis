@@ -28,7 +28,6 @@ python main_subclass.py
 
 ```
 
-</details>
 
 The program will start the keyboard listener to change between modes using the keys '1', '2', and '3' from the keyboard,
 
@@ -88,3 +87,5 @@ The current code is working with dummy classes that inherit from multiprocessing
             current_stream = Detector(queue, processed_queue, message_queue)
             engine.say("Object location mode")
 ```
+
+</details>
