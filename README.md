@@ -89,3 +89,17 @@ The current code is working with dummy classes that inherit from multiprocessing
 ```
 
 </details>
+
+<details open>
+<summary>Modes</summary>
+
+
+</details>
+
+
+<summary>Considerations</summary>
+
+The main goal at this phase is to develop a reliable Manager that can switch (start and kill) between Processes (modes.)
+Developing each module in parallel (pytesseract, Yolov5, localization...) is possible.
+
+
