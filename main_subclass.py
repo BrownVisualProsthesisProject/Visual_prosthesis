@@ -1,21 +1,17 @@
 """Main process."""
 
 # Standar modules
-import multiprocessing as mp
 import time
-from queue import Empty
+import subprocess
+import socket
 
 # Third party modules
 import cv2
-import faster_fifo_reduction
+import imagezmq
 from pynput import keyboard
 
 # Local modules
-from Camera.camera import WebcamStream
-from faster_fifo import Queue
-from Modes.mode1_subclass import Grayscale
-from Modes.mode3_subclass import Detector
-from Modes.ocr import OCR
+#from Camera.cameraZMQ import WebcamStream
 
 from Text2Voice.utils import text2voice
 
@@ -37,12 +33,6 @@ def start_key_listener(currentKey):
     return currentKey
 
 
-# created a size limited queue for communication
-queue = Queue(1000 * 1000)
-processed_queue = Queue(1000 * 1000)
-message_queue = mp.Queue()
-
-
 last_key = ""
 currentKey = ""
 
@@ -53,19 +43,24 @@ currentKey = start_key_listener(currentKey)
 engine = text2voice()
 
 # Initializing and starting multi-threaded queue webcam input stream.
-webcam_stream = WebcamStream(queue, stream_id=0)
-webcam_stream.start()
+# Accept connections on all tcp addresses, port 5557
+sender = imagezmq.ImageSender(connect_to='tcp://127.0.0.1:5557', REQ_REP=False)
+
+host_name = socket.gethostname() # send RPi hostname with each image
+webcam = cv2.VideoCapture(0)
+time.sleep(1.0)  # allow camera sensor to warm up
 
 # Initialize current stream variable.
 current_stream = None
 
-while webcam_stream.stopped is not True:
+while True:
 
-    if queue.empty():
-        continue
-
-    # Get new frame from webcam.
-    frame = queue.get()
+    # Grab new frame.
+    ret, frame = webcam.read()
+    sender.send_image(host_name, frame)
+    
+    # Show raw frame.
+    cv2.imshow("frame", frame)
 
     # Change current mode.
     if currentKey != last_key and currentKey in "123":
@@ -73,46 +68,32 @@ while webcam_stream.stopped is not True:
 
         # Kill current stream.
         if current_stream:
-            message_queue.put("Kill")
-            time.sleep(0.001)
+            current_stream.terminate()
             current_stream = None
-
-        # Initialize chosen process.
+            time.sleep(0.006)
+            
+        # Initialize/switch process.
         if currentKey == "1":
-            current_stream = Grayscale(queue, processed_queue, message_queue)
+            current_stream = subprocess.Popen(['python', 'Modes/grasping.py'])
             engine.say("Grasping mode")
 
         elif currentKey == "2":
-            current_stream = OCR(queue, processed_queue, message_queue)
+            current_stream = subprocess.Popen(['python', 'Modes/ocr.py'],
+                    bufsize=0)
             engine.say("Document OCR mode")
 
-            # process 2
         elif currentKey == "3":
-            current_stream = Detector(queue, processed_queue, message_queue)
+            current_stream = subprocess.Popen(['python', 'Modes/locate.py'],
+                    bufsize=0)
             engine.say("Object location mode")
 
         engine.runAndWait()
-        current_stream.start()
-
-    # Show processed image.
-    if not processed_queue.empty():
-        cv2.imshow("processed frame", processed_queue.get())
-
-    # Show current webcam frame.
-    cv2.imshow("frame", frame)
 
     # Press q to end program.
     if cv2.waitKey(1) == ord("q"):
-        message_queue.put("Kill")
-        webcam_stream.stop()
+        if current_stream:
+            current_stream.terminate()
         break
 
-# Flush queues.
-try:
-    queue.get(timeout=0.1)
-    processed_queue.get(timeout=0.1)
-except Empty:
-    print("Queue is empty")
-
-# Close opencv windows.
+# Close opencv windows. Check flush.
 cv2.destroyAllWindows()
