@@ -50,12 +50,11 @@ def start_key_listener(currentKey):
     return currentKey
 ```
 
-the multiprocessing queues for communication (soon to be changed with ZMQ communication),
+ZMQ sender to publish the camera frames,
 
 ```python
-queue = Queue(1000 * 1000)
-processed_queue = Queue(1000 * 1000)
-message_queue = mp.Queue()
+sender = imagezmq.ImageSender(connect_to='tcp://127.0.0.1:5557', REQ_REP=False)
+host_name = socket.gethostname()
 ```
 
 the text to voice engine to send sound,
@@ -64,27 +63,28 @@ the text to voice engine to send sound,
 engine = text2voice()
 ```
 
-and the webcam stream that will put frames in the queue variable.
+and the webcam stream. 
 
 ```python
-webcam_stream = WebcamStream(queue, stream_id=0)
-webcam_stream.start()
+webcam = cv2.VideoCapture(0)
 ```
 
-The current code is working with dummy classes that inherit from multiprocessing.Process class to run the modules as a separate process.
+The current code works with the [subprocess](https://docs.python.org/3/library/subprocess.html) standard library to run the `if __name__ == "__main__":`  boilerplate of each module.
 
 ```python
-        # Initialize chosen process.
+        # Initialize/switch process.
         if currentKey == "1":
-            current_stream = Grayscale(queue, processed_queue, message_queue)
+            current_stream = subprocess.Popen(['python', 'Modes/grasping.py'])
             engine.say("Grasping mode")
 
         elif currentKey == "2":
-            current_stream = OCR(queue, processed_queue, message_queue)
+            current_stream = subprocess.Popen(['python', 'Modes/ocr.py'],
+                    bufsize=0)
             engine.say("Document OCR mode")
 
         elif currentKey == "3":
-            current_stream = Detector(queue, processed_queue, message_queue)
+            current_stream = subprocess.Popen(['python', 'Modes/locate.py'],
+                    bufsize=0)
             engine.say("Object location mode")
 ```
 
