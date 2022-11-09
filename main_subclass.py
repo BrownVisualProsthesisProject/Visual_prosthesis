@@ -74,16 +74,16 @@ while True:
             
         # Initialize/switch process.
         if currentKey == "1":
-            current_stream = subprocess.Popen(['python3.8', '-m', 'Modes/grasping.py'])
+            current_stream = subprocess.Popen(['python3.8', 'Modes/grasping.py'])
             engine.say("Grasping mode")
 
         elif currentKey == "2":
-            current_stream = subprocess.Popen(['python3.8', '-m', 'Modes/ocr.py'],
+            current_stream = subprocess.Popen(['python3.8', 'Modes/ocr.py'],
                     bufsize=0)
             engine.say("Document OCR mode")
 
         elif currentKey == "3":
-            current_stream = subprocess.Popen(['python3.8', '-m',  'Modes/locate.py'],
+            current_stream = subprocess.Popen(['python3.8', 'Modes/locate.py'],
                     bufsize=0)
             engine.say("Object location mode")
 
