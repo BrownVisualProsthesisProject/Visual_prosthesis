@@ -9,4 +9,4 @@ sudo docker run \
        -e DISPLAY=$DISPLAY \
        -e LD_PRELOAD=/usr/lib/aarch64-linux-gnu/libgomp.so.1 \
        -v /tmp/.X11-unix/:/tmp/.X11-unix \
-       yolov5 python3.8 detect.py --source 0
+       vlab python3.8 main_subclass.py --source 0
