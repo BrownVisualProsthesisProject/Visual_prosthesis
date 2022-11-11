@@ -35,7 +35,6 @@ RUN gdown https://drive.google.com/uc?id=1m0d8ruUY8RvCP9eVjZw4Nc8LAwM8yuGV
 RUN python3.8 -m pip install torchvision-*.whl
 
 RUN git clone -b jchang_fasterZQM https://github.com/BrownVisualProsthesisProject/Visual_prosthesis
-RUN ls
 WORKDIR Visual_prosthesis
 RUN python3.8 -m pip install -r requirements_jetson.txt
 
