@@ -1,6 +1,7 @@
 """Main process."""
 
 # Standar modules
+import os
 import time
 import subprocess
 import socket
@@ -9,12 +10,14 @@ import socket
 import cv2
 import imagezmq
 from pynput import keyboard
+import simplejpeg
 
 # Local modules
 #from Camera.cameraZMQ import WebcamStream
 
 from Text2Voice.utils import text2voice
 
+os.environ["CAMERA"] = os.pathsep + os.path.join(os.getcwd(), 'Camera')
 
 def start_key_listener(currentKey):
     """Keyboard listener."""
@@ -53,11 +56,20 @@ time.sleep(1.0)  # allow camera sensor to warm up
 # Initialize current stream variable.
 current_stream = None
 
+# JPEG quality, 0 - 100
+jpeg_quality = 95
+
 while True:
 
     # Grab new frame.
     ret, frame = webcam.read()
-    sender.send_image(host_name, frame)
+    jpg_buffer = simplejpeg.encode_jpeg(frame, 
+                quality=jpeg_quality, 
+                colorspace='BGR')
+    #ret_code, jpg_buffer = cv2.imencode(
+    #            ".jpg", frame, [int(cv2.IMWRITE_JPEG_QUALITY), jpeg_quality])
+    sender.send_jpg(host_name, jpg_buffer)
+    #sender.send_image(host_name, frame)
     
     # Show raw frame.
     cv2.imshow("frame", frame)
@@ -74,7 +86,7 @@ while True:
             
         # Initialize/switch process.
         if currentKey == "1":
-            current_stream = subprocess.Popen(['python', 'Modes/grasping.py'])
+            current_stream = subprocess.Popen(['python', 'Modes/grasping.py'], cwd=os.getcwd())
             engine.say("Grasping mode")
 
         elif currentKey == "2":

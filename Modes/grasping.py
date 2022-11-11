@@ -4,6 +4,13 @@
 import cv2
 import imagezmq
 import torch
+import numpy as np
+import os
+
+d = dict(os.environ)
+print(d)
+
+from Video_stream_sub import VideoStreamSubscriber
 
 
 if __name__ == "__main__":
@@ -16,11 +23,15 @@ if __name__ == "__main__":
     # Font config for the label.
     label_font = cv2.FONT_HERSHEY_COMPLEX
 
-    # Initialize frame receiver.
-    imagehub = imagezmq.ImageHub(open_port='tcp://127.0.0.1:5557', REQ_REP=False)
+    hostname = "127.0.0.1"  # Use to receive from localhost
+    # hostname = "192.168.86.38"  # Use to receive from other computer
+    port = 5557
+
+    imagehub = VideoStreamSubscriber(hostname, port)
     
     # Grab new frame.
     host_name, frame = imagehub.recv_image()
+    frame = cv2.imdecode(np.frombuffer(frame, dtype='uint8'), -1)
 
     # Get frame shape.
     x_shape, y_shape = frame.shape[1], frame.shape[0]
@@ -28,6 +39,7 @@ if __name__ == "__main__":
     while True :
         # Grab new frame.
         host_name, frame = imagehub.recv_image()
+        frame = cv2.imdecode(np.frombuffer(frame, dtype='uint8'), -1)
         # Run object detection inference over frame.
         results = model(frame)
         
