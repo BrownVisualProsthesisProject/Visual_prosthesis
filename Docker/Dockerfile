@@ -5,7 +5,17 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
       git \
       python3.8 python3.8-dev python3-pip \
-      libopenmpi-dev libomp-dev libopenblas-dev libblas-dev libeigen3-dev python3-tk espeak
+      libopenmpi-dev libomp-dev libopenblas-dev libblas-dev libeigen3-dev python3-tk \
+      # zmq 
+      libzmq3-dev \
+      # tesseract
+      tesseract-ocr \
+      libtesseract-dev \
+      libleptonica-dev \
+      # text-to-speech
+      ffmpeg \
+      espeak \
+      alsa-utils \	
 
 RUN python3.8 -m pip install --upgrade pip
 RUN python3.8 -m pip install setuptools gdown
