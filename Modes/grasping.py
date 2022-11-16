@@ -7,8 +7,6 @@ import torch
 import numpy as np
 import os
 
-d = dict(os.environ)
-print(d)
 
 from Video_stream_sub import VideoStreamSubscriber
 

@@ -16,8 +16,9 @@ import simplejpeg
 #from Camera.cameraZMQ import WebcamStream
 
 from Text2Voice.utils import text2voice
+from pydub import AudioSegment
+from pydub.playback import play
 
-os.environ["CAMERA"] = os.pathsep + os.path.join(os.getcwd(), 'Camera')
 
 def start_key_listener(currentKey):
     """Keyboard listener."""
@@ -59,6 +60,11 @@ current_stream = None
 # JPEG quality, 0 - 100
 jpeg_quality = 95
 
+#Audio modes
+audios = {"localization": AudioSegment.from_wav("./audios/localization.wav"),
+            "ocr": AudioSegment.from_wav("./audios/ocr.wav"),
+            "grasping":AudioSegment.from_wav("./audios/grasping.wav")}
+
 while True:
 
     # Grab new frame.
@@ -86,20 +92,18 @@ while True:
             
         # Initialize/switch process.
         if currentKey == "1":
-            current_stream = subprocess.Popen(['python3.8', 'Modes/grasping.py'])
-            engine.say("Grasping mode")
+            current_stream = subprocess.Popen(['python3', 'Modes/grasping.py'])
+            play(audios["grasping"])
 
         elif currentKey == "2":
-            current_stream = subprocess.Popen(['python3.8', 'Modes/ocr.py'],
+            current_stream = subprocess.Popen(['python3', 'Modes/ocr.py'],
                     bufsize=0)
-            engine.say("Document OCR mode")
+            play(audios["ocr"])
 
         elif currentKey == "3":
-            current_stream = subprocess.Popen(['python3.8', 'Modes/locate.py'],
+            current_stream = subprocess.Popen(['python3', 'Modes/locate.py'],
                     bufsize=0)
-            engine.say("Object location mode")
-
-        engine.runAndWait()
+            play(audios["localization"])
 
     # Press q to end program.
     if cv2.waitKey(1) == ord("q"):
