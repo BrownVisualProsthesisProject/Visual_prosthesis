@@ -92,16 +92,16 @@ while True:
             
         # Initialize/switch process.
         if currentKey == "1":
-            current_stream = subprocess.Popen(['python3', 'Modes/grasping.py'])
+            current_stream = subprocess.Popen(['python3.8', 'Modes/grasping.py'])
             play(audios["grasping"])
 
         elif currentKey == "2":
-            current_stream = subprocess.Popen(['python3', 'Modes/ocr.py'],
+            current_stream = subprocess.Popen(['python3.8', 'Modes/ocr.py'],
                     bufsize=0)
             play(audios["ocr"])
 
         elif currentKey == "3":
-            current_stream = subprocess.Popen(['python3', 'Modes/locate.py'],
+            current_stream = subprocess.Popen(['python3.8', 'Modes/locate.py'],
                     bufsize=0)
             play(audios["localization"])
 
