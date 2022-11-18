@@ -6,11 +6,12 @@ pyttsx3 == 2.90
 imagezmq == 1.1.1 
 simplejpeg
 pydub
+tesserocr
 
 #Yolov5
 
 # Base ----------------------------------------
-#PyYAML>=5.3.1
+PyYAML>=5.3.1
 matplotlib>=3.2.2
 numpy>=1.18.5
 Pillow>=7.1.2
