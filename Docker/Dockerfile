@@ -17,13 +17,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 ## install some audio stuff
 ################################################################
       alsa-base \
-            libasound2-dev \
-            alsa-utils \
-            portaudio19-dev \
-		  libsndfile1 \
-		  unzip \
-		espeak \
-		ffmpeg \
+      libasound2-dev \
+      alsa-utils \
+      portaudio19-dev \
+      libsndfile1 \
+      unzip \
+      espeak \
+      ffmpeg \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 

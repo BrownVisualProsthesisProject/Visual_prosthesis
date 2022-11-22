@@ -1,7 +1,6 @@
 """Main process."""
 
 # Standar modules
-import os
 import time
 import subprocess
 import socket
@@ -13,8 +12,6 @@ from pynput import keyboard
 import simplejpeg
 
 # Local modules
-#from Camera.cameraZMQ import WebcamStream
-
 from Text2Voice.utils import text2voice
 from pydub import AudioSegment
 from pydub.playback import play
@@ -72,10 +69,7 @@ while True:
     jpg_buffer = simplejpeg.encode_jpeg(frame, 
                 quality=jpeg_quality, 
                 colorspace='BGR')
-    #ret_code, jpg_buffer = cv2.imencode(
-    #            ".jpg", frame, [int(cv2.IMWRITE_JPEG_QUALITY), jpeg_quality])
     sender.send_jpg(host_name, jpg_buffer)
-    #sender.send_image(host_name, frame)
     
     # Show raw frame.
     cv2.imshow("frame", frame)

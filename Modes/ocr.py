@@ -2,8 +2,10 @@
 
 # Third party modules
 import cv2
-import imagezmq
+from PIL import Image
 import tesserocr
+
+# Local modules
 from Video_stream_sub import VideoStreamSubscriber
 
 import numpy as np
@@ -55,6 +57,7 @@ if __name__ == "__main__":
         # Grab new frame.
         host_name, frame = imagehub.recv_image()
         frame = cv2.imdecode(np.frombuffer(frame, dtype='uint8'), -1)
+        frame = Image.fromarray(frame)
         res = tesserocr.image_to_text(frame)
         # Print result.
         print(res)

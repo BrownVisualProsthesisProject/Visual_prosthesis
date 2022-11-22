@@ -1,18 +1,17 @@
 """pub_sub_receive.py -- receive OpenCV stream using PUB SUB."""
 
 import sys
-
-import socket
+import threading
 import traceback
+from time import sleep
+
 import cv2
 import imagezmq
-import threading
 import numpy as np
-from time import sleep
+
 
 # Helper class implementing an IO deamon thread
 class VideoStreamSubscriber:
-
     def __init__(self, hostname, port):
         self.hostname = hostname
         self.port = port
@@ -26,12 +25,17 @@ class VideoStreamSubscriber:
         flag = self._data_ready.wait(timeout=timeout)
         if not flag:
             raise TimeoutError(
-                "Timeout while reading from subscriber tcp://{}:{}".format(self.hostname, self.port))
+                "Timeout while reading from subscriber tcp://{}:{}".format(
+                    self.hostname, self.port
+                )
+            )
         self._data_ready.clear()
         return self._data
 
     def _run(self):
-        receiver = imagezmq.ImageHub("tcp://{}:{}".format(self.hostname, self.port), REQ_REP=False)
+        receiver = imagezmq.ImageHub(
+            "tcp://{}:{}".format(self.hostname, self.port), REQ_REP=False
+        )
         while not self._stop:
             self._data = receiver.recv_jpg()
             self._data_ready.set()
@@ -52,7 +56,7 @@ if __name__ == "__main__":
     try:
         while True:
             msg, frame = receiver.receive()
-            image = cv2.imdecode(np.frombuffer(frame, dtype='uint8'), -1)
+            image = cv2.imdecode(np.frombuffer(frame, dtype="uint8"), -1)
 
             # Due to the IO thread constantly fetching images, we can do any amount
             # of processing here and the next call to receive() will still give us
@@ -64,10 +68,10 @@ if __name__ == "__main__":
             cv2.imshow("Pub Sub Receive", image)
             cv2.waitKey(1)
     except (KeyboardInterrupt, SystemExit):
-        print('Exit due to keyboard interrupt')
+        print("Exit due to keyboard interrupt")
     except Exception as ex:
-        print('Python error with no Exception handler:')
-        print('Traceback error:', ex)
+        print("Python error with no Exception handler:")
+        print("Traceback error:", ex)
         traceback.print_exc()
     finally:
         receiver.close()

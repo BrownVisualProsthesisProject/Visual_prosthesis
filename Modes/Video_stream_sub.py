@@ -1,14 +1,14 @@
 """pub_sub_receive.py -- receive OpenCV stream using PUB SUB."""
 
+# Standard modules
 import sys
-
-import socket
+import threading
 import traceback
+
+# Third party modules
 import cv2
 import imagezmq
-import threading
 import numpy as np
-from time import sleep
 
 # Helper class implementing an IO deamon thread
 class VideoStreamSubscriber:
