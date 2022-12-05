@@ -25,6 +25,7 @@ class VideoStreamSubscriber:
     def recv_image(self, timeout=15.0):
         flag = self._data_ready.wait(timeout=timeout)
         if not flag:
+            self._stop = True
             raise TimeoutError(
                 "Timeout while reading from subscriber tcp://{}:{}".format(self.hostname, self.port))
         self._data_ready.clear()

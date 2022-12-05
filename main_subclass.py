@@ -10,11 +10,15 @@ import cv2
 import imagezmq
 from pynput import keyboard
 import simplejpeg
+import json
+import os
 
 # Local modules
 from Text2Voice.utils import text2voice
 from pydub import AudioSegment
 from pydub.playback import play
+from Modes.message_stream import MessageStreamSubscriber
+
 
 
 def start_key_listener(currentKey):
@@ -53,6 +57,7 @@ time.sleep(1.0)  # allow camera sensor to warm up
 
 # Initialize current stream variable.
 current_stream = None
+audio_stream = None
 
 # JPEG quality, 0 - 100
 jpeg_quality = 95
@@ -61,6 +66,8 @@ jpeg_quality = 95
 audios = {"localization": AudioSegment.from_wav("./audios/localization.wav"),
             "ocr": AudioSegment.from_wav("./audios/ocr.wav"),
             "grasping":AudioSegment.from_wav("./audios/grasping.wav")}
+
+
 
 while True:
 
@@ -75,13 +82,16 @@ while True:
     cv2.imshow("frame", frame)
 
     # Change current mode.
-    if currentKey != last_key and currentKey in "123":
+    if currentKey != last_key and currentKey in "1234":
         last_key = currentKey
 
         # Kill current stream.
         if current_stream:
             current_stream.terminate()
+            if audio_stream:
+                audio_stream.terminate()
             current_stream = None
+            audio_stream = None
             time.sleep(0.006)
             
         # Initialize/switch process.
@@ -94,15 +104,23 @@ while True:
                     bufsize=0)
             play(audios["ocr"])
 
-        elif currentKey == "3":
+        elif currentKey == "3" or currentKey == "4" :
             current_stream = subprocess.Popen(['python3.8', 'Modes/locate.py'],
                     bufsize=0)
+            if currentKey == "3":
+                audio_stream = subprocess.Popen(['python3.8', 'Modes/3d_locate_sound.py', "--approach", "1"]) #type 1
+            else:
+                audio_stream = subprocess.Popen(['python3.8', 'Modes/3d_locate_sound.py', "--approach", "2"]) #type 2
+
             play(audios["localization"])
 
+    
     # Press q to end program.
     if cv2.waitKey(1) == ord("q"):
         if current_stream:
             current_stream.terminate()
+            if audio_stream:
+                audio_stream.terminate()
         break
 
 # Close opencv windows. Check flush.
