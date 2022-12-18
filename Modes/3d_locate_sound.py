@@ -19,7 +19,7 @@ def first_approach():
     system = Sound_System()
     # Subscribes to all topics
     phi = 0
-    rho = 5
+    rho = 1
 
     lower_bound = 0
     upper_bound = 30
@@ -64,7 +64,8 @@ def second_approach():
     system = Sound_System()
     # Subscribes to all topics
     phi = 0
-    rho = 5
+    theta = 90
+    rho = 1
 
     last_random = -1
 
@@ -73,7 +74,7 @@ def second_approach():
 
         for pos in range(len(angles)):
 
-            system.play_sound("beep" + ".wav", 1, angles[pos], phi)
+            system.play_sound("beep" + ".wav", rho, angles[pos], phi)
             time.sleep(1.5)
 
             if angles[pos] == angles[-1]:
@@ -114,6 +115,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     print(args.approach, type(args.approach))
+    time.sleep(4)
     if args.approach == 1:
         first_approach()
     else:
