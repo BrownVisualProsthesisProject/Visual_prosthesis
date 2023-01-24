@@ -10,6 +10,27 @@ from Video_stream_sub import VideoStreamSubscriber
 
 import numpy as np
 
+BINARY_THREHOLD = 180
+def image_smoothening(img):
+    ret1, th1 = cv2.threshold(img, BINARY_THREHOLD, 255, cv2.THRESH_BINARY)
+    ret2, th2 = cv2.threshold(th1, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    blur = cv2.GaussianBlur(img, (3, 3), 0)
+    ret3, th3 = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    return th3
+
+def remove_noise_and_smooth(img):
+    #img = cv2.imread(file_name, 0)
+	img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+	filtered = cv2.adaptiveThreshold(img.astype(np.uint8), 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 41, 3)
+	kernel = np.ones((1, 1), np.uint8)
+	opening = cv2.morphologyEx(filtered, cv2.MORPH_OPEN, kernel)
+	closing = cv2.morphologyEx(opening, cv2.MORPH_CLOSE, kernel)
+	ocr_image = image_smoothening(img)
+	ocr_image = cv2.bitwise_or(img, closing)
+	return ocr_image
+
+
+
 def SetCVImage(self, image, color='BGR'):
     """ Sets an OpenCV-style image for recognition.
 
@@ -49,7 +70,7 @@ if __name__ == "__main__":
     hostname = "127.0.0.1"  # Use to receive from localhost
     # hostname = "192.168.86.38"  # Use to receive from other computer
     port = 5557
-
+    config = ("-l eng --oem 1 --psm 6")
     # Initialize frame receiver.
     imagehub = VideoStreamSubscriber(hostname, port)
 
@@ -57,8 +78,16 @@ if __name__ == "__main__":
         # Grab new frame.
         host_name, frame = imagehub.recv_image()
         frame = cv2.imdecode(np.frombuffer(frame, dtype='uint8'), -1)
+        frame = remove_noise_and_smooth(frame)
+        
+        cv2.imshow("processed frame", frame)
         frame = Image.fromarray(frame)
-        res = tesserocr.image_to_text(frame)
-        # Print result.
-        print(res)
+        
+        if cv2.waitKey(1) == ord("q"):
+            text = tesserocr.image_to_text(frame)
+            
+            print("Detection: " + text)
+
+
+
 

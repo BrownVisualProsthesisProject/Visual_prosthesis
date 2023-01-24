@@ -96,21 +96,22 @@ while True:
             
         # Initialize/switch process.
         if currentKey == "1":
-            current_stream = subprocess.Popen(['python3.8', 'Modes/grasping.py'])
+            current_stream = subprocess.Popen(['python3', 'Modes/grasping.py'])
+            audio_stream = subprocess.Popen(['python3', 'Modes/hand_sound.py', "--approach", "1"]) #type 1
             play(audios["grasping"])
 
         elif currentKey == "2":
-            current_stream = subprocess.Popen(['python3.8', 'Modes/ocr.py'],
+            current_stream = subprocess.Popen(['python3', 'Modes/easy.py'],
                     bufsize=0)
             play(audios["ocr"])
 
         elif currentKey == "3" or currentKey == "4" :
-            current_stream = subprocess.Popen(['python3.8', 'Modes/locate.py'],
+            current_stream = subprocess.Popen(['python3', 'Modes/locate.py'],
                     bufsize=0)
             if currentKey == "3":
-                audio_stream = subprocess.Popen(['python3.8', 'Modes/3d_locate_sound.py', "--approach", "1"]) #type 1
+                audio_stream = subprocess.Popen(['python3', 'Modes/3d_locate_sound.py', "--approach", "1"]) #type 1
             else:
-                audio_stream = subprocess.Popen(['python3.8', 'Modes/3d_locate_sound.py', "--approach", "2"]) #type 2
+                audio_stream = subprocess.Popen(['python3', 'Modes/3d_locate_sound.py', "--approach", "2"]) #type 2
 
             play(audios["localization"])
 
