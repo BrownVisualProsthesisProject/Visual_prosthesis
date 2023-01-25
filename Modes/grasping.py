@@ -94,9 +94,9 @@ if __name__ == "__main__":
                                 if abs(horizontal_distance) > abs(vertical_distance):
                                     # Check if finger is to the right or left of random point
                                     if horizontal_distance > 0:
-                                        movement = "right"
-                                    else:
                                         movement = "left"
+                                    else:
+                                        movement = "right"
                                 # Else, check if finger is above or below random point
                                 else:
                                     if vertical_distance > 0:
