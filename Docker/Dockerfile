@@ -44,7 +44,7 @@ RUN python3.8 -m pip install torchvision-*.whl
 RUN git clone -b jchang_grasping https://github.com/BrownVisualProsthesisProject/Visual_prosthesis
 WORKDIR Visual_prosthesis
 RUN python3.8 -m pip install -r requirements_jetson.txt
-RUN python3.8 -m pip uninstall opencv-python-headless opencv-python opencv-contrib-python
+RUN python3.8 -m pip uninstall opencv-python-headless opencv-python opencv-contrib-python -y
 RUN python3.8 -m pip install opencv-python opencv-contrib-python
 RUN cp ./Docker/asound.conf /etc
 
