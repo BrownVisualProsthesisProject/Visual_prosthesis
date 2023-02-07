@@ -1,14 +1,17 @@
-from message_stream import MessageStreamSubscriber, MessageStreamSubscriberEvent
+"""Hand guiding."""
+
+# Standard modules.
+import argparse
 import json
 import time
+
+# Local modules.
+from message_stream import MessageStreamSubscriberEvent
 from sound_system import Sound_System
-import argparse
-import random
-import numpy as np
 
 
 def first_approach():
-
+    """Sound queues for fix point hand guiding."""
     system = Sound_System()
     # Subscribes to all topics
     phi = 0
@@ -20,22 +23,21 @@ def first_approach():
         "down": "down.wav",
         "left": "left.wav",
         "right": "right.wav",
-        "notification": "notification.wav"
+        "notification": "notification.wav",
     }
-    
-    hostname = 'tcp://127.0.0.1:5559'  # Use to receive from localhost
+
+    hostname = "tcp://127.0.0.1:5559"  # Use to receive from localhost
     # hostname = "192.168.86.38"  # Use to receive from other computer
     port = 5559
 
     imagehub = MessageStreamSubscriberEvent(hostname, port)
 
-
     while True:
-        
 
         message = imagehub.recv_msg()
-        
-        if not message: continue
+
+        if not message:
+            continue
         obj = json.loads(message)
         print(obj["move"])
         # get the sound file name based on the move value
@@ -50,7 +52,7 @@ def first_approach():
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--approach', type=int)
+    parser.add_argument("--approach", type=int)
     args = parser.parse_args()
 
     print(args.approach, type(args.approach))

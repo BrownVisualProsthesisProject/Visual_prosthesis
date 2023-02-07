@@ -1,26 +1,26 @@
 """Grasping module with Yolov5."""
 
+# Standard modules
+import json
+import math
+import random
+
 # Third party modules
 import cv2
 import mediapipe as mp
-import time
-import math
 import numpy as np
 import zmq
-import json
-import random
-from pydub.playback import play
 from pydub import AudioSegment
+from pydub.playback import play
 
 # Local modules
 from Video_stream_sub import VideoStreamSubscriber
-
 
 if __name__ == "__main__":
 
     context = zmq.Context()
     locate_socket = context.socket(zmq.PUB)
-    locate_socket.bind('tcp://127.0.0.1:5559')
+    locate_socket.bind("tcp://127.0.0.1:5559")
 
     mp_drawing = mp.solutions.drawing_utils
     mp_drawing_styles = mp.solutions.drawing_styles
@@ -32,30 +32,30 @@ if __name__ == "__main__":
     port = 5557
 
     imagehub = VideoStreamSubscriber(hostname, port)
-    
+
     # Grab new frame.
     host_name, frame = imagehub.recv_image()
-    frame = cv2.imdecode(np.frombuffer(frame, dtype='uint8'), -1)
+    frame = cv2.imdecode(np.frombuffer(frame, dtype="uint8"), -1)
 
     # Get frame shape.
     x_shape, y_shape = frame.shape[1], frame.shape[0]
-    random_x = random.randint(20,x_shape-20)
-    random_y = random.randint(20,y_shape-20)
-    random_point = np.array([random_x,random_y])
+    random_x = random.randint(20, x_shape - 20)
+    random_y = random.randint(20, y_shape - 20)
+    random_point = np.array([random_x, random_y])
     audio = AudioSegment.from_wav("./audios/notification.wav")
-    
 
     with mp_hands.Hands(
-    max_num_hands=1,
-    model_complexity=0,
-    min_detection_confidence=0.5,
-    min_tracking_confidence=0.5) as hands:
+        max_num_hands=1,
+        model_complexity=0,
+        min_detection_confidence=0.5,
+        min_tracking_confidence=0.5,
+    ) as hands:
 
-        while True :
-            
+        while True:
+
             # Grab new frame.
             host_name, frame = imagehub.recv_image()
-            frame = cv2.imdecode(np.frombuffer(frame, dtype='uint8'), -1)
+            frame = cv2.imdecode(np.frombuffer(frame, dtype="uint8"), -1)
             # Run object detection inference over frame.
             # To improve performance, optionally mark the image as not writeable to
             # pass by reference.
@@ -72,8 +72,8 @@ if __name__ == "__main__":
                         x_px = min(math.floor(landmark.x * x_shape), x_shape - 1)
                         y_px = min(math.floor(landmark.y * y_shape), y_shape - 1)
                         if idx == 8:
-                            frame = cv2.circle(frame, (x_px,y_px), 2, BLUE_COLOR, 2)
-                            finger = np.array([x_px,y_px])
+                            frame = cv2.circle(frame, (x_px, y_px), 2, BLUE_COLOR, 2)
+                            finger = np.array([x_px, y_px])
 
                             # Calculate distance between finger and random point
                             distance = np.linalg.norm(random_point - finger)
@@ -82,12 +82,12 @@ if __name__ == "__main__":
                             if distance < 15:
                                 movement = "notification"
                                 play(audio)
-                                random_x = random.randint(30,x_shape-30)
-                                random_y = random.randint(30,y_shape-30)
-                                random_point = np.array([random_x,random_y])
+                                random_x = random.randint(30, x_shape - 30)
+                                random_y = random.randint(30, y_shape - 30)
+                                random_point = np.array([random_x, random_y])
                             # Else, calculate horizontal and vertical distance
                             else:
-                                horizontal_distance = x_px - random_x 
+                                horizontal_distance = x_px - random_x
                                 vertical_distance = y_px - random_y
 
                                 # Check if horizontal distance is greater than vertical distance
@@ -103,19 +103,19 @@ if __name__ == "__main__":
                                         movement = "up"
                                     else:
                                         movement = "down"
-                                    
-                            messagedata = { 
-                            "move": movement,
+
+                            messagedata = {
+                                "move": movement,
                             }
                             obj = json.dumps(messagedata)
                             locate_socket.send_string(obj)
-                            
+
                         else:
-                            frame = cv2.circle(frame, (x_px,y_px), 2, (0,0,222), 2)
-            
-            frame = cv2.circle(frame, (random_x,random_y), 2, (0,0,222), 10)
-                        
+                            frame = cv2.circle(frame, (x_px, y_px), 2, (0, 0, 222), 2)
+
+            frame = cv2.circle(frame, (random_x, random_y), 2, (0, 0, 222), 10)
+
             # Flip the image horizontally for a selfie-view display.
-            cv2.imshow('MediaPipe Hands', cv2.flip(frame, 1))
+            cv2.imshow("MediaPipe Hands", cv2.flip(frame, 1))
             if cv2.waitKey(5) & 0xFF == 27:
                 break
