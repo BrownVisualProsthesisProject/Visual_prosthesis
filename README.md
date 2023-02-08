@@ -106,11 +106,11 @@ def choose_mode(currentKey, audios):
 + Overall, the module must help the patient to read text (which text? TBD).
 + For instance, if the handwritten text on a piece of paper is the desired text to be read. Then, the module has to detect the piece of paper, cut that part of the image, preprocess the cropped to improve the OCR results and run the OCR library over that preprocessed cropped image.
 
-### Comments
-
-[x] The main goal at this phase is to develop a reliable Manager that can switch (start and kill) between Processes (modes) while developing each module in parallel (pytesseract, Yolov5, localization...).
-[ ] The current objective is to have an object detector for a small subset of everyday items (cellphones and keys) while enhancing each module and managing technical debt (improving code quality and speed, refactoring, and documentation) in parallel.
 
 </details>
 
 
+### Comments
+
+[x] The main goal at this phase is to develop a reliable Manager that can switch (start and kill) between Processes (modes) while developing each module in parallel (pytesseract, Yolov5, localization...).
+[ ] The current objective is to have an object detector for a small subset of everyday items (cellphones and keys) while enhancing each module and managing technical debt (improving code quality and speed, refactoring, and documentation) in parallel.
