@@ -9,12 +9,12 @@ import socket
 import cv2
 import imagezmq
 from pynput import keyboard
+import simplejpeg
 
 # Local modules
-#from Camera.cameraZMQ import WebcamStream
-
 from Text2Voice.utils import text2voice
-
+from pydub import AudioSegment
+from pydub.playback import play
 
 def start_key_listener(currentKey):
     """Keyboard listener."""
@@ -32,7 +32,50 @@ def start_key_listener(currentKey):
     listener.start()
     return currentKey
 
+def send_frame(sender, host_name, jpeg_quality, frame):
+    """Encodes frame and sends it to port."""
+    jpg_buffer = simplejpeg.encode_jpeg(frame, 
+                quality=jpeg_quality, 
+                colorspace='BGR')
+    sender.send_jpg(host_name, jpg_buffer)
 
+def kill_mode(current_stream, audio_stream):
+    """Terminates current stream mode safely."""
+    if current_stream:
+        current_stream.terminate()
+        if audio_stream:
+            audio_stream.terminate()
+        current_stream = None
+        audio_stream = None
+        time.sleep(0.006)
+
+def choose_mode(currentKey, audios):
+    """Initialize or switch desired mode as a subprocess."""
+    if currentKey == "1":
+        current_stream = subprocess.Popen(['python3', 'Modes/grasping.py'])
+        audio_stream = subprocess.Popen(['python3', 'Modes/hand_sound.py', "--approach", "1"]) #type 1
+        play(audios["grasping"])
+
+    elif currentKey == "2":
+        current_stream = subprocess.Popen(['python3', 'Modes/easy.py'],
+                    bufsize=0)
+        audio_stream = None
+        play(audios["ocr"])
+
+    elif currentKey == "3" or currentKey == "4" or currentKey == "5" :
+        current_stream = subprocess.Popen(['python3', 'Modes/locate.py'],
+                    bufsize=0)
+        if currentKey == "3":
+            audio_stream = subprocess.Popen(['python3', 'Modes/3d_locate_sound.py', "--approach", "1"]) #type 1
+        elif currentKey == "4":
+            audio_stream = subprocess.Popen(['python3', 'Modes/3d_locate_sound.py', "--approach", "2"]) #type 2
+        else:
+            audio_stream = subprocess.Popen(['python3', 'Modes/3d_locate_sound.py', "--approach", "3"]) #type 3
+
+        play(audios["localization"])
+    return current_stream,audio_stream
+
+# Program starts (main function)
 last_key = ""
 currentKey = ""
 
@@ -45,54 +88,52 @@ engine = text2voice()
 # Initializing and starting multi-threaded queue webcam input stream.
 # Accept connections on all tcp addresses, port 5557
 sender = imagezmq.ImageSender(connect_to='tcp://127.0.0.1:5557', REQ_REP=False)
+host_name = socket.gethostname() 
 
-host_name = socket.gethostname() # send RPi hostname with each image
-webcam = cv2.VideoCapture(0)
-time.sleep(1.0)  # allow camera sensor to warm up
+# Initialize webcam and allow camera sensor to warm up.
+webcam = cv2.VideoCapture(0) 
+time.sleep(1.0)
 
 # Initialize current stream variable.
 current_stream = None
+audio_stream = None
+
+# JPEG quality, 0 - 100 for ZMQ communication.
+jpeg_quality = 95
+
+# Audio files for modes.
+audios = {"localization": AudioSegment.from_wav("./audios/localization.wav"),
+            "ocr": AudioSegment.from_wav("./audios/ocr.wav"),
+            "grasping":AudioSegment.from_wav("./audios/grasping.wav")}
 
 while True:
 
     # Grab new frame.
     ret, frame = webcam.read()
-    sender.send_image(host_name, frame)
+    
+    # Send frame to clients.
+    send_frame(sender, host_name, jpeg_quality, frame)
     
     # Show raw frame.
     cv2.imshow("frame", frame)
 
     # Change current mode.
-    if currentKey != last_key and currentKey in "123":
+    if currentKey != last_key and currentKey in "12345":
         last_key = currentKey
 
-        # Kill current stream.
-        if current_stream:
-            current_stream.terminate()
-            current_stream = None
-            time.sleep(0.006)
+        # Kill current stream mode.
+        kill_mode(current_stream, audio_stream)
             
         # Initialize/switch process.
-        if currentKey == "1":
-            current_stream = subprocess.Popen(['python', 'Modes/grasping.py'])
-            engine.say("Grasping mode")
+        current_stream, audio_stream = choose_mode(currentKey, audios)
 
-        elif currentKey == "2":
-            current_stream = subprocess.Popen(['python', 'Modes/ocr.py'],
-                    bufsize=0)
-            engine.say("Document OCR mode")
-
-        elif currentKey == "3":
-            current_stream = subprocess.Popen(['python', 'Modes/locate.py'],
-                    bufsize=0)
-            engine.say("Object location mode")
-
-        engine.runAndWait()
-
+    
     # Press q to end program.
     if cv2.waitKey(1) == ord("q"):
         if current_stream:
             current_stream.terminate()
+            if audio_stream:
+                audio_stream.terminate()
         break
 
 # Close opencv windows. Check flush.

@@ -52,7 +52,6 @@ class WebcamStream:
 
     def update(self):
         """Read next available frame."""
-
         while self.stopped is not True:
             self.grabbed, self.frame = self.vcap.read()
             if self.grabbed is False:

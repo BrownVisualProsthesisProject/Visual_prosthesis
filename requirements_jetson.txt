@@ -4,14 +4,23 @@ pynput == 1.7.6
 pytesseract == 0.3.10
 pyttsx3 == 2.90
 imagezmq == 1.1.1 
+python-openal
+easyocr
+mediapipe
+easyocr
+simplejpeg
+pydub
+tesserocr
+scikit-image==0.17.2
+imutils
 
 #Yolov5
 
 # Base ----------------------------------------
+PyYAML>=5.3.1
 matplotlib>=3.2.2
 numpy>=1.18.5
 Pillow>=7.1.2
-PyYAML>=5.3.1
 requests>=2.23.0
 scipy>=1.4.1
 tqdm>=4.64.0
