@@ -84,10 +84,12 @@ def choose_mode(currentKey, audios):
 
         play(audios["localization"])
     return current_stream,audio_stream
+ ```
 
 </details>
 
 <details close>
+    
 <summary>Modes</summary>
     
 #### Localization
