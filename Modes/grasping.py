@@ -119,3 +119,5 @@ if __name__ == "__main__":
             cv2.imshow("MediaPipe Hands", cv2.flip(frame, 1))
             if cv2.waitKey(5) & 0xFF == 27:
                 break
+
+            

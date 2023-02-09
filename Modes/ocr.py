@@ -77,6 +77,7 @@ if __name__ == "__main__":
     config = "-l eng --oem 1 --psm 6"
     # Initialize frame receiver.
     imagehub = VideoStreamSubscriber(hostname, port)
+    
 
     while True:
         # Grab new frame.
