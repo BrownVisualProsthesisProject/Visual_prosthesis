@@ -95,17 +95,24 @@ def choose_mode(currentKey, audios):
 #### Localization
 + The module uses [YoloV5](https://github.com/ultralytics/yolov5) to detect a specific set of everyday use objects TBD. Currently, it detects the classes from [COCO dataset](https://cocodataset.org/#home)
 + The main process starts concurrently a subprocess that will play the audio of the objects. It currently works with the "person" class.
+
+![](https://github.com/BrownVisualProsthesisProject/Visual_prosthesis/blob/main/Documentation/localization.gif)
     
 #### Grasping
 + The module uses YoloV5 for the detection.
 + The module uses [MediaPipe](https://google.github.io/mediapipe/solutions/hands.html) for hand keypoint detection.
 + The module has to use the Text2Voice module to guide the hand of the patient to touch and grasp the desired object of the specific set of everyday use objects. Currently, the hand is guided with sound queues (up, down, left, right) to a random location marked as a red dot on the screen.
+
+![](https://github.com/BrownVisualProsthesisProject/Visual_prosthesis/blob/main/Documentation/grasping.gif)
+
     
 #### OCR
 + The module must use an OCR library such as pytesseract, EasyOCR, or PaddleOCR.
 + Overall, the module must help the patient to read text (which text? TBD).
 + For instance, if the handwritten text on a piece of paper is the desired text to be read. Then, the module has to detect the piece of paper, cut that part of the image, preprocess the cropped to improve the OCR results and run the OCR library over that preprocessed cropped image.
 
+![alt text](https://github.com/BrownVisualProsthesisProject/Visual_prosthesis/blob/main/Documentation/ocr1.png)
+![alt text](https://github.com/BrownVisualProsthesisProject/Visual_prosthesis/blob/main/Documentation/ocr2.png
 
 </details>
 
