@@ -56,7 +56,7 @@ class MessageStreamSubscriberEvent:
         self._thread.daemon = True
         self._thread.start()
 
-    def recv_msg(self, timeout=15.0):
+    def recv_msg(self, timeout=30.0):
         flag = self._data_ready.wait(timeout=timeout)
         if not flag:
             raise TimeoutError(

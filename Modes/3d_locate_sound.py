@@ -5,7 +5,27 @@ from sound_system import Sound_System
 from sound_hrtf_system import Listener, load_sound, Player
 import argparse
 import os
+import numpy as np
 
+def scale_x(x, a, b, min_x, max_x):
+    """
+    Scales an integer x from the range [min_x, max_x] to the range [a, b].
+    
+    Parameters:
+        x (int): The integer to be scaled.
+        a (int): The lower bound of the target range.
+        b (int): The upper bound of the target range.
+        min_x (int): The lower bound of the original range.
+        max_x (int): The upper bound of the original range.
+    
+    Returns:
+        The scaled integer.
+    """
+    # Normalize x to the range [0, 1]
+    normalized_x = (x - min_x) / (max_x - min_x)
+    
+    # Scale the normalized value to the target range [a, b]
+    return normalized_x * (b - a) + a
 
 def first_approach():
     hostname = 'tcp://127.0.0.1:5559'  # Use to receive from localhost
@@ -18,37 +38,34 @@ def first_approach():
     # Subscribes to all topics
     phi = 0
     rho = 1
-
-    lower_bound = 0
-    upper_bound = 30
+    min_percentage = .15
+    max_percentage = .85
+    angles = np.linspace(min_percentage*180,max_percentage*180,6)
+    lower_bound = angles[0]
+    upper_bound = angles[1]
 
     while True:
 
-        if lower_bound >= 180:
-            lower_bound = 0
-            upper_bound = 30
-        
+        for angle in range(len(angles)-1):
+            message = imagehub.recv_msg()
+            
+            if not message: continue
 
-        message = imagehub.recv_msg()
-        
-        if not message: continue
-
-        obj = json.loads(message)
-        detections = zip(obj["locs"],obj["labels"])
-        detections = sorted(detections, key=lambda tup: tup[0])
- 
-        #could be faster y falta generar los audios
-        for i in range(len(detections)):
-            if lower_bound <= detections[i][0]*180 <= upper_bound:
-                print(detections[i][0]*180)
-                if detections[i][1] == "person":
-                    system.play_sound("person_slow" + ".wav", rho, detections[i][0]*180, phi)
-                    time.sleep(1.5)
-            elif detections[i][0]*180 > upper_bound:
-                break
-
-        lower_bound += 30
-        upper_bound += 30
+            obj = json.loads(message)
+            detections = zip(obj["locs"],obj["labels"])
+            detections = sorted(detections, key=lambda tup: tup[0])
+    
+            #could be faster y falta generar los audios
+            for i in range(len(detections)):
+                scaled_position = scale_x((1.0-detections[i][0])*180,angles[0],angles[-1],0,180)
+                if angles[angle] <= scaled_position <= angles[angle+1]:
+                    print(scaled_position)
+                    if detections[i][1] == "person":
+                        print(scaled_position)
+                        system.play_sound("person_slow" + ".wav", rho, (1.0-detections[i][0])*180, phi)
+                        time.sleep(2)
+                elif scaled_position > angles[angle+1]:
+                    break
 
 def second_approach():
     hostname = 'tcp://127.0.0.1:5559'  # Use to receive from localhost
@@ -56,8 +73,9 @@ def second_approach():
     port = 5559
 
     imagehub = MessageStreamSubscriber(hostname, port)
-
-    angles = [0, 30, 60, 90, 120, 150, 180]
+    min_percentage = .15
+    max_percentage = .85
+    angles = np.linspace(min_percentage*180,max_percentage*180,6)
     # Load sound system.
     system = Sound_System()
     # Subscribes to all topics
@@ -73,7 +91,7 @@ def second_approach():
         for pos in range(len(angles)):
 
             system.play_sound("blip" + ".wav", rho, angles[pos], phi)
-            time.sleep(1.5)
+            time.sleep(2)
 
             if angles[pos] == angles[-1]:
                 break
@@ -92,14 +110,14 @@ def second_approach():
             detections = zip(obj["locs"],obj["labels"])
             detections = sorted(detections, key=lambda tup: tup[0])
 
-            print(detections)
             #could be faster y falta generar los audios
             for i in range(len(detections)):
-                
-                if angles[pos] <= detections[i][0]*180 <= angles[pos+1]:
-                    print(detections[i][0]*180)
+                scaled_position = scale_x((1.0-detections[i][0])*180,angles[0],angles[-1],0,180)
+                print(scaled_position)
+                if angles[pos] <= scaled_position<= angles[pos+1]:
+                    print(scaled_position)
                     if detections[i][1] == "person":
-                        system.play_sound("person_slow" + ".wav", rho, detections[i][0]*180, phi)
+                        system.play_sound("person_slow" + ".wav", rho, scaled_position, phi)
                         time.sleep(1.5)
         
         time.sleep(2.5)

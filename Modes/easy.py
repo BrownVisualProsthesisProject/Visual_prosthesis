@@ -10,57 +10,25 @@ from Video_stream_sub import VideoStreamSubscriber
 
 BINARY_THREHOLD = 180
 
+def sharpen(gray_frame):
 
-def image_smoothening(img):
-    ret1, th1 = cv2.threshold(img, BINARY_THREHOLD, 255, cv2.THRESH_BINARY)
-    ret2, th2 = cv2.threshold(th1, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    blur = cv2.GaussianBlur(img, (3, 3), 0)
-    ret3, th3 = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    return th3
-
-def second_th(frame):
+    blur = cv2.GaussianBlur(gray_frame, (0,0), 3)
+    unsharp_mask = cv2.addWeighted(gray_frame, 1.5, blur, -0.5, 0)
     
-    bgray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    blured1 = cv2.medianBlur(bgray,3)
-    blured2 = cv2.medianBlur(bgray,51)
-    divided = np.ma.divide(blured1, blured2).data
-    normed = np.uint8(255*divided/divided.max())
-    th, threshed = cv2.threshold(normed, 100, 255, cv2.THRESH_OTSU)
-    return threshed
+    return unsharp_mask
 
-def remove_noise_and_smooth(img):
-    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+def sharpen2(gray_frame):
+    blur = cv2.medianBlur(gray_frame, 3)
+    # Apply an unsharp mask to sharpen the image
+    unsharp_masked = cv2.addWeighted(gray_frame, 1.5, blur, -0.5, 0)
+    return unsharp_masked
+
+def binarize(frame):
     
-    # img = cv2.imread(file_name, 0)
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    img = clahe.apply(np.uint8(img * 255))
-    filtered = cv2.adaptiveThreshold(
-        img.astype(np.uint8), 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 41, 3
-    )
-    kernel = np.ones((1, 1), np.uint8)
-    opening = cv2.morphologyEx(filtered, cv2.MORPH_OPEN, kernel)
-    closing = cv2.morphologyEx(opening, cv2.MORPH_CLOSE, kernel)
-    ocr_image = image_smoothening(img)
-    ocr_image = cv2.bitwise_or(img, closing)
-    return ocr_image
-
-
-def skew_correction(img):
-
-    # Skew correction
-    coords = np.column_stack(np.where(img > 0))
-    angle = cv2.minAreaRect(coords)[-1]
-    if angle < -45:
-        angle = -(90 + angle)
-    else:
-        angle = -angle
-    (h, w) = img.shape[:2]
-    center = (w // 2, h // 2)
-    M = cv2.getRotationMatrix2D(center, angle, 1.0)
-    rotated = cv2.warpAffine(
-        img, M, (w, h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE
-    )
-    return rotated
+    binary_frame = cv2.adaptiveThreshold(frame, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 15, 6)
+    binary_frame = cv2.bitwise_not(binary_frame)
+    bilateral_filtered = cv2.bilateralFilter(binary_frame, 9, 75, 75)
+    return binary_frame
 
 
 def SetCVImage(self, image, color="BGR"):
@@ -110,14 +78,16 @@ if __name__ == "__main__":
         # Grab new frame.
         host_name, frame = imagehub.recv_image()
         frame = cv2.imdecode(np.frombuffer(frame, dtype="uint8"), -1)
-        frame = remove_noise_and_smooth(frame)
+        gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        unsharp_mask = sharpen(gray_frame)
+        binary_frame = binarize(unsharp_mask)
 
         # show the output image
-        cv2.imshow("Text Detection", frame)
+        cv2.imshow("Text Detection", binary_frame)
         # frame = Image.fromarray(frame)
 
         if cv2.waitKey(1) == ord("q"):
-            result = reader.readtext(frame, paragraph=True)
+            result = reader.readtext(gray_frame, paragraph=True)
 
             print("Detection:")
             print(result)

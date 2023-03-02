@@ -39,8 +39,8 @@ if __name__ == "__main__":
 
     # Get frame shape.
     x_shape, y_shape = frame.shape[1], frame.shape[0]
-    random_x = random.randint(20, x_shape - 20)
-    random_y = random.randint(20, y_shape - 20)
+    random_x = random.randint(30, x_shape - 40)
+    random_y = random.randint(30, y_shape - 40)
     random_point = np.array([random_x, random_y])
     audio = AudioSegment.from_wav("./audios/notification.wav")
 
@@ -72,14 +72,14 @@ if __name__ == "__main__":
                         x_px = min(math.floor(landmark.x * x_shape), x_shape - 1)
                         y_px = min(math.floor(landmark.y * y_shape), y_shape - 1)
                         if idx == 8:
-                            frame = cv2.circle(frame, (x_px, y_px), 2, BLUE_COLOR, 2)
+                            frame = cv2.circle(frame, (x_px, y_px), 3, BLUE_COLOR, 3)
                             finger = np.array([x_px, y_px])
 
                             # Calculate distance between finger and random point
                             distance = np.linalg.norm(random_point - finger)
 
                             # Check if distance is less than 15
-                            if distance < 15:
+                            if distance < 20:
                                 movement = "notification"
                                 play(audio)
                                 random_x = random.randint(30, x_shape - 30)
@@ -113,7 +113,7 @@ if __name__ == "__main__":
                         else:
                             frame = cv2.circle(frame, (x_px, y_px), 2, (0, 0, 222), 2)
 
-            frame = cv2.circle(frame, (random_x, random_y), 2, (0, 0, 222), 10)
+            frame = cv2.circle(frame, (random_x, random_y), 3, (0, 0, 222), 10)
 
             # Flip the image horizontally for a selfie-view display.
             cv2.imshow("MediaPipe Hands", cv2.flip(frame, 1))
