@@ -41,10 +41,13 @@ RUN python3.8 -m pip install torch-*.whl
 RUN gdown https://drive.google.com/uc?id=1m0d8ruUY8RvCP9eVjZw4Nc8LAwM8yuGV
 RUN python3.8 -m pip install torchvision-*.whl
 
-RUN git clone -b jchang_grasping https://github.com/BrownVisualProsthesisProject/Visual_prosthesis
+RUN git clone -b demo https://github.com/BrownVisualProsthesisProject/Visual_prosthesis
 WORKDIR Visual_prosthesis
+RUN python3.8 -m pip install --upgrade pip
 RUN python3.8 -m pip install -r requirements_jetson.txt
 RUN python3.8 -m pip uninstall opencv-python-headless opencv-python opencv-contrib-python -y
 RUN python3.8 -m pip install opencv-python opencv-contrib-python
+RUN python3.8 -m  pip install protobuf==3.20.3 --upgrade
+
 RUN cp ./Docker/asound.conf /etc
 
