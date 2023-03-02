@@ -52,29 +52,30 @@ def kill_mode(current_stream, audio_stream):
 def choose_mode(currentKey, audios):
     """Initialize or switch desired mode as a subprocess."""
     if currentKey == "1":
-        current_stream = subprocess.Popen(['python3', 'Modes/grasping.py'])
-        audio_stream = subprocess.Popen(['python3', 'Modes/hand_sound.py', "--approach", "1"]) #type 1
+        current_stream = subprocess.Popen([python_version, 'Modes/grasping.py'])
+        audio_stream = subprocess.Popen([python_version, 'Modes/hand_sound.py', "--approach", "1"]) #type 1
         play(audios["grasping"])
 
     elif currentKey == "2":
-        current_stream = subprocess.Popen(['python3', 'Modes/easy.py'],
+        current_stream = subprocess.Popen([python_version, 'Modes/easy.py'],
                     bufsize=0)
         audio_stream = None
         play(audios["ocr"])
 
     elif currentKey == "3" or currentKey == "4" or currentKey == "5" :
-        current_stream = subprocess.Popen(['python3', 'Modes/locate.py'],
+        current_stream = subprocess.Popen([python_version, 'Modes/locate.py'],
                     bufsize=0)
         if currentKey == "3":
-            audio_stream = subprocess.Popen(['python3', 'Modes/3d_locate_sound.py', "--approach", "1"]) #type 1
+            audio_stream = subprocess.Popen([python_version, 'Modes/3d_locate_sound.py', "--approach", "1"]) #type 1
         elif currentKey == "4":
-            audio_stream = subprocess.Popen(['python3', 'Modes/3d_locate_sound.py', "--approach", "2"]) #type 2
+            audio_stream = subprocess.Popen([python_version, 'Modes/3d_locate_sound.py', "--approach", "2"]) #type 2
         else:
-            audio_stream = subprocess.Popen(['python3', 'Modes/3d_locate_sound.py', "--approach", "3"]) #type 3
+            audio_stream = subprocess.Popen([python_version, 'Modes/3d_locate_sound.py', "--approach", "3"]) #type 3
 
         play(audios["localization"])
     return current_stream,audio_stream
 
+python_version = "python3.8"
 # Program starts (main function)
 last_key = ""
 currentKey = ""
