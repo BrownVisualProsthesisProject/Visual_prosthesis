@@ -39,8 +39,8 @@ if __name__ == "__main__":
 
     # Get frame shape.
     x_shape, y_shape = frame.shape[1], frame.shape[0]
-    random_x = random.randint(30, x_shape - 40)
-    random_y = random.randint(30, y_shape - 40)
+    random_x = random.randint(40, x_shape - 40)
+    random_y = random.randint(40, y_shape - 40)
     random_point = np.array([random_x, random_y])
     audio = AudioSegment.from_wav("./audios/notification.wav")
 
@@ -82,8 +82,8 @@ if __name__ == "__main__":
                             if distance < 20:
                                 movement = "notification"
                                 play(audio)
-                                random_x = random.randint(30, x_shape - 30)
-                                random_y = random.randint(30, y_shape - 30)
+                                random_x = random.randint(40, x_shape - 40)
+                                random_y = random.randint(40, y_shape - 40)
                                 random_point = np.array([random_x, random_y])
                             # Else, calculate horizontal and vertical distance
                             else:
