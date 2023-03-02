@@ -58,14 +58,16 @@ def first_approach():
             #could be faster y falta generar los audios
             for i in range(len(detections)):
                 scaled_position = scale_x((1.0-detections[i][0])*180,angles[0],angles[-1],0,180)
+                print(detections[i][0],scaled_position)
                 if angles[angle] <= scaled_position <= angles[angle+1]:
-                    print(scaled_position)
+                    print(detections[i][0],scaled_position)
                     if detections[i][1] == "person":
                         print(scaled_position)
                         system.play_sound("person_slow" + ".wav", rho, scaled_position, phi)
                         time.sleep(2)
-                elif scaled_position > angles[angle+1]:
+                elif (1-scaled_position) > angles[angle+1]:
                     break
+
 
 def second_approach():
     hostname = 'tcp://127.0.0.1:5559'  # Use to receive from localhost
