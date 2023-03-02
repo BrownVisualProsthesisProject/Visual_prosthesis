@@ -62,7 +62,7 @@ def first_approach():
                     print(scaled_position)
                     if detections[i][1] == "person":
                         print(scaled_position)
-                        system.play_sound("person_slow" + ".wav", rho, (1.0-detections[i][0])*180, phi)
+                        system.play_sound("person_slow" + ".wav", rho, scaled_position, phi)
                         time.sleep(2)
                 elif scaled_position > angles[angle+1]:
                     break
