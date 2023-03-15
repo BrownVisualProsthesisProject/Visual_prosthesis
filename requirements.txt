@@ -1,21 +1,27 @@
 # Main
-opencv-python == 4.6.0.66
-pynput == 1.7.6
-pytesseract == 0.3.10
-pyttsx3 == 2.90
-imagezmq == 1.1.1 
+opencv-python
+pynput
+pytesseract
+pyttsx3
+imagezmq
+python-openal
+easyocr
+mediapipe
+simplejpeg
+pydub
+tesserocr
+scikit-image
+imutils
 
 #Yolov5
 
 # Base ----------------------------------------
+PyYAML>=5.3.1
 matplotlib>=3.2.2
 numpy>=1.18.5
 Pillow>=7.1.2
-PyYAML>=5.3.1
 requests>=2.23.0
 scipy>=1.4.1
-torch>=1.7.0  # see https://pytorch.org/get-started/locally/ (recommended)
-torchvision>=0.8.1
 tqdm>=4.64.0
 
 # Logging -------------------------------------
@@ -29,4 +35,3 @@ seaborn>=0.11.0
 ipython  # interactive notebook
 psutil  # system utilization
 thop>=0.1.1  # FLOPs computation
-

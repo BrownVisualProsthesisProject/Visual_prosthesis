@@ -6,6 +6,7 @@ from sound_hrtf_system import Listener, load_sound, Player
 import argparse
 import os
 import numpy as np
+from pynput import keyboard
 
 def scale_x(x, a, b, min_x, max_x):
     """
@@ -26,6 +27,35 @@ def scale_x(x, a, b, min_x, max_x):
     
     # Scale the normalized value to the target range [a, b]
     return normalized_x * (b - a) + a
+
+
+def count_objects(detections, threshold):
+
+    class_counts = {}
+    for pos, label in detections:
+
+        if label in class_counts:
+            class_counts[label] += 1
+        else:
+            class_counts[label] = 1
+
+    return class_counts
+
+def start_key_listener(currentKey):
+    """Keyboard listener."""
+
+    def on_press(key):
+        """Stores selected key."""
+        try:
+            global currentKey
+            currentKey = key.char
+            print("alphanumeric key {0} pressed".format(key.char))
+        except AttributeError:
+            print("special key {0} pressed".format(key))
+
+    listener = keyboard.Listener(on_press=on_press)
+    listener.start()
+    return currentKey
 
 def first_approach():
     hostname = 'tcp://127.0.0.1:5559'  # Use to receive from localhost
@@ -130,79 +160,89 @@ def third_approach():
     # hostname = "192.168.86.38"  # Use to receive from other computer
     port = 5559
 
-    imagehub = MessageStreamSubscriber(hostname, port)
-
-    x = [0, 30, 60, 90, 120, 150, 180]
-
-    print(os.listdir("./audios"))
-
+    imagehub = MessageStreamSubscriberEvent(hostname, port)
     # Load sound system.
-    listener = Listener()
-    #initialize sound
-    beep_sound = load_sound('./audios/blip.wav')
-    #load sound player
-    beep_player = Player()
-    #set listener position
-    listener.position = (180,0,0)
-    listener.hrtf = 1
-    #set player position
-    beep_player.position = (0,0,0)
-    #load sound into player
-    beep_player.add(beep_sound)
-
-    #initialize sound
-    class_sound = load_sound('./audios/person_slow.wav')
-    #load sound player
-    class_player = Player()
-    #set player position
-    class_player.position = (0,0,0)
-    #load sound into player
-    class_player.add(class_sound)
-    #enable loop sound so it plays forever
-    
+    system = Sound_System()
     # Subscribes to all topics
+    phi = 0
+    rho = 1
 
-    last_random = -1
-
-    while True:
-
-
-        for pos in range(len(x)):
-            beep_player.position = (x[pos]*2,200,0)
-            beep_player.play()
-            time.sleep(1.5)
-
-            if x[pos] == x[-1]:
-                break
-
-            message = imagehub.recv_msg()
-
-            if not message: continue
-
-            obj = json.loads(message)
-
-            if obj["random"] == last_random:
-                continue
-
-            last_random = obj["random"]
-
-            detections = zip(obj["locs"],obj["labels"])
-            detections = sorted(detections, key=lambda tup: tup[0])
-
-            print(detections)
-            #could be faster y falta generar los audios
-            for i in range(len(detections)):
-                
-                if x[pos] <= detections[i][0]*180 <= x[pos+1]:
-                    print(detections[i][0]*180)
-                    if detections[i][1] == "person":
-                        class_player.position = (detections[i][0]*180*2,200,0)
-                        class_player.play()
-                        time.sleep(1.5)
-        
-        time.sleep(2.5)
+    angles = [0,45,75,105,135,180]
+    times = ["two","one","twelve","eleven","ten"]
     
+    while True:
+        message = imagehub.recv_msg()
+        obj = json.loads(message)
 
+        if obj["mode"] != "":
+            if obj["mode"] == "l":
+                localize(imagehub, system, angles, times)
+            elif obj["mode"] == "d":
+                describe(imagehub, system, angles, times)
+
+def localize(imagehub, system, angles, times):
+    for angle in range(len(angles)-1):
+        message = imagehub.recv_msg()
+            
+        if not message: continue
+            
+        obj = json.loads(message)
+        detections = zip(obj["locs"],obj["labels"])
+        detections = sorted(detections, key=lambda tup: tup[0])
+        class_counts = {}
+            #could be faster y falta generar los audios
+        for i in range(len(detections)):
+            scaled_position = (1.0-detections[i][0])
+                #here we init the dictionary
+                
+            if angles[angle] <= scaled_position*180 <= angles[angle+1]:
+                    # here we count 
+                print(detections[i],scaled_position*180)
+                    
+                if detections[i][1] in class_counts:
+                    class_counts[detections[i][1]] += 1
+                else:
+                    class_counts[detections[i][1]] = 1
+
+            elif scaled_position > angles[angle+1]:
+                break
+            
+        if class_counts:
+            print(class_counts)
+            system.describe_position(class_counts, times[angle])
+                #system.play_sound("person_slow" + ".wav", rho, scaled_position, phi)
+            time.sleep(3.2)
+            #here we say what we count.
+            #we need a new sound system that can generate the sentence from the dictionary
+            #checar tts en jetson y SR en jetson
+            
+def describe(imagehub, system, angles, times):
+
+    message = imagehub.recv_msg()
+        
+    if message:
+        
+        obj = json.loads(message)
+        detections = zip(obj["locs"],obj["labels"])
+        detections = sorted(detections, key=lambda tup: tup[0])
+        class_counts = {}
+            #could be faster y falta generar los audios
+        for i in range(len(detections)):
+            
+            if detections[i][1] in class_counts:
+                class_counts[detections[i][1]] += 1
+            else:
+                class_counts[detections[i][1]] = 1
+
+            
+        if class_counts:
+            print(class_counts)
+            system.describe_scene(class_counts, times[0])
+                #system.play_sound("person_slow" + ".wav", rho, scaled_position, phi)
+            #here we say what we count.
+            #we need a new sound system that can generate the sentence from the dictionary
+            #checar tts en jetson y SR en jetson
+            
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()

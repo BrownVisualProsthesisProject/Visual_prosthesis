@@ -75,7 +75,7 @@ def choose_mode(currentKey, audios):
         play(audios["localization"])
     return current_stream,audio_stream
 
-python_version = "python3.8"
+python_version = "python3"
 # Program starts (main function)
 last_key = ""
 currentKey = ""

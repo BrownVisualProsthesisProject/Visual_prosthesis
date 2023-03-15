@@ -14,12 +14,13 @@ import zmq
 # Local modules
 from Video_stream_sub import VideoStreamSubscriber
 
-def send_json(locate_socket, x_locs, detected_classes):
+def send_json(locate_socket, x_locs, detected_classes, mode):
     """Sends json data for sound system."""
     messagedata = {
             "locs": x_locs,
             "labels": detected_classes,
             "random": random.randint(1, sys.maxsize),
+            "mode": mode,
         }
 
     obj = json.dumps(messagedata)
@@ -33,7 +34,7 @@ if __name__ == "__main__":
 
     # Load Yolov5 model.
     model = torch.hub.load(
-        "ultralytics/yolov5", "yolov5n"
+        "ultralytics/yolov5", "yolov5s"
     )  # or yolov5n - yolov5x6, custom
     # Box color.
     bgr = (0, 255, 0)  # color of the box
@@ -57,6 +58,8 @@ if __name__ == "__main__":
 
     topic = 1000
 
+    key_stroke_counter = 0
+    mode = ""
     while True:
         # Grab new frame.
         host_name, frame = imagehub.recv_image()
@@ -93,11 +96,23 @@ if __name__ == "__main__":
 
         # Show processed frame.
         cv2.imshow("processed frame", frame)
-        if cv2.waitKey(1) == ord("q"):
-            pass
         
+        key_pressed = cv2.waitKey(1)
+        if key_pressed == ord("d"):
+            mode = "d"
+        elif key_pressed == ord("l"):
+            mode = "l"
+
+        if mode != "":
+            if key_stroke_counter < 10:
+                key_stroke_counter+=1
+            else:
+                mode = ""
+                key_stroke_counter = 0
+        
+        print("The mode is ", mode)
         # Do not send information to sound system when len(detected_classes)==0.
         if not x_locs:
             continue
 
-        send_json(locate_socket, x_locs, detected_classes)
+        send_json(locate_socket, x_locs, detected_classes, mode)
