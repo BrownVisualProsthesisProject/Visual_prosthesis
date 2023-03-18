@@ -104,7 +104,7 @@ if __name__ == "__main__":
             mode = "l"
 
         if mode != "":
-            if key_stroke_counter < 10:
+            if key_stroke_counter < 3:
                 key_stroke_counter+=1
             else:
                 mode = ""

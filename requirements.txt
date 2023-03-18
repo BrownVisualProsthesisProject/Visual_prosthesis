@@ -12,7 +12,8 @@ pydub
 tesserocr
 scikit-image
 imutils
-
+gtts
+pygame
 #Yolov5
 
 # Base ----------------------------------------

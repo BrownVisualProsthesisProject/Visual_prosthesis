@@ -92,7 +92,7 @@ sender = imagezmq.ImageSender(connect_to='tcp://127.0.0.1:5557', REQ_REP=False)
 host_name = socket.gethostname() 
 
 # Initialize webcam and allow camera sensor to warm up.
-webcam = cv2.VideoCapture(0) 
+webcam = cv2.VideoCapture(2) 
 time.sleep(1.0)
 
 # Initialize current stream variable.
