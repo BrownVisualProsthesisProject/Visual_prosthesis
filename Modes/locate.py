@@ -96,11 +96,10 @@ if __name__ == "__main__":
 
         # Show processed frame.
         cv2.imshow("processed frame", frame)
-        
         key_pressed = cv2.waitKey(1)
-        if key_pressed == ord("d"):
+        if key_pressed == ord("/") or key_pressed == ord("7"):
             mode = "d"
-        elif key_pressed == ord("l"):
+        elif key_pressed == ord("*") or key_pressed == ord("-"):
             mode = "l"
 
         if mode != "":
