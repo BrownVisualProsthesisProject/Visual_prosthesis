@@ -77,7 +77,7 @@ if __name__ == "__main__":
         for i in range(len(labels)):
             row = cord[i]
             # If confidence score is less than 0.45 we avoid making a prediction.
-            if row[4] < 0.45:
+            if row[4] < 0.55:
                 continue
 
             x1 = int(row[0] * x_shape)

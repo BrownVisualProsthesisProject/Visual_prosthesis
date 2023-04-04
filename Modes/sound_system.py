@@ -15,7 +15,15 @@ class Sound_System():
 
         pygame.mixer.init()
     
-    def describe_position(self, cont_classes, clock, rho=0, theta=90, phi=0):
+    def describe_position(self, cont_classes, clock, understand_flag=True, rho=0, theta=90, phi=0):
+        
+        if not understand_flag:
+            sentence = "Sorry, I can't locate that."
+            tts = gTTS(sentence, lang='en', slow=False)
+            tts.save("./audios/sentence.mp3") 
+            sound = pygame.mixer.Sound("./audios/sentence.mp3")
+            sound.play()
+            return
 
         sentence = ""
         num_items = len(cont_classes)
