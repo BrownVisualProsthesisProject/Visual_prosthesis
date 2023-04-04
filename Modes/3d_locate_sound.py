@@ -219,21 +219,27 @@ def third_approach():
     
     transcribe_thread = threading.Thread(target=transcribe_forever,
                      args=(audio_queue, result_queue, audio_model))
-    record_thread.start()
-    transcribe_thread.start()
+    
     
     while True:
+        record_thread.start()
+        transcribe_thread.start()
+        time.sleep(1)
         speech = result_queue.get() 
         speech = re.sub(r'\s+', '', speech).lower().replace(".", "")
+        
+        # Stop recording and transcribing audio
         print(speech)
+        record_thread.join()
+        transcribe_thread.join()
+
+
         if speech == "locate":
             print("localizing")
             localize(imagehub, system, angles, times)
         elif speech == "description":
             print("describing")
             describe(imagehub, system, angles, times)
-        else:
-            
 
 
 def localize(imagehub, system, angles, times):
