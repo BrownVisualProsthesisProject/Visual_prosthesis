@@ -112,11 +112,28 @@ audios = {"localization": AudioSegment.from_wav("./audios/localization.wav"),
             "ocr": AudioSegment.from_wav("./audios/ocr.wav"),
             "grasping":AudioSegment.from_wav("./audios/grasping.wav")}
 
+def close_streams(current_stream, audio_stream):
+    if current_stream:
+        current_stream.terminate()
+        current_stream.wait()
+        current_stream = None
+        print("current stream finished")
+        if audio_stream:
+            audio_stream.terminate()
+            audio_stream.kill()
+            audio_stream.wait()
+            audio_stream = None
+            print("audio stream finished")
+    return current_stream,audio_stream
+
 while True:
 
     # Grab new frame.
     ret, frame = webcam.read()
-    
+    if not frame:
+        print("Error capturing frame.")
+        current_stream, audio_stream = close_streams(current_stream, audio_stream)
+        break
     # Send frame to clients.
     send_frame(sender, host_name, jpeg_quality, frame)
     
@@ -136,17 +153,7 @@ while True:
     
     # Press q to end program.
     if cv2.waitKey(1) == ord("q"):
-        if current_stream:
-            current_stream.terminate()
-            current_stream.wait()
-            current_stream = None
-            print("current stream finished")
-            if audio_stream:
-                audio_stream.terminate()
-                audio_stream.kill()
-                audio_stream.wait()
-                audio_stream = None
-                print("audio stream finished")
+        close_streams(current_stream, audio_stream)
         break
 
 # Close opencv windows. Check flush.
