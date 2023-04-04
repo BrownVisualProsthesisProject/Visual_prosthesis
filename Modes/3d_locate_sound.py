@@ -7,6 +7,46 @@ import argparse
 import os
 import numpy as np
 from pynput import keyboard
+from pydub import AudioSegment
+import speech_recognition as sr
+import whisper
+import queue
+import tempfile
+import os
+import threading
+import torch
+import io
+import re
+
+def record_audio(audio_queue, energy, pause, dynamic_energy):
+    #load the speech recognizer and set the initial energy threshold and pause threshold
+    r = sr.Recognizer()
+    r.energy_threshold = energy
+    r.pause_threshold = pause
+    r.dynamic_energy_threshold = dynamic_energy
+
+    with sr.Microphone(sample_rate=16000) as source:
+        print("Say something!")
+        i = 0
+        while True:
+            #get and save audio to wav file
+            audio = r.listen(source)
+
+            torch_audio = torch.from_numpy(np.frombuffer(audio.get_raw_data(), np.int16).flatten().astype(np.float32) / 32768.0)
+            audio_data = torch_audio
+
+            audio_queue.put_nowait(audio_data)
+            i += 1
+
+
+def transcribe_forever(audio_queue, result_queue, audio_model):
+    while True:
+        audio_data = audio_queue.get()
+
+        result = audio_model.transcribe(audio_data,language='english')
+
+        predicted_text = result["text"]
+        result_queue.put_nowait(predicted_text)
 
 def scale_x(x, a, b, min_x, max_x):
     """
@@ -163,22 +203,38 @@ def third_approach():
     imagehub = MessageStreamSubscriberEvent(hostname, port)
     # Load sound system.
     system = Sound_System()
-    # Subscribes to all topics
-    phi = 0
-    rho = 1
 
     angles = [0,45,75,105,135,180]
     times = ["two","one","twelve","eleven","ten"]
+
+    energy = 300
+    pause = 0.8
+    dynamic_energy = False
+
+    audio_model = whisper.load_model("tiny")
+    audio_queue = queue.Queue()
+    result_queue = queue.Queue()
+    record_thread = threading.Thread(target=record_audio,
+                     args=(audio_queue, energy, pause, dynamic_energy))
+    
+    transcribe_thread = threading.Thread(target=transcribe_forever,
+                     args=(audio_queue, result_queue, audio_model))
+    record_thread.start()
+    transcribe_thread.start()
     
     while True:
-        message = imagehub.recv_msg()
-        obj = json.loads(message)
+        speech = result_queue.get() 
+        speech = re.sub(r'\s+', '', speech).lower().replace(".", "")
+        print(speech)
+        if speech == "locate":
+            print("localizing")
+            localize(imagehub, system, angles, times)
+        elif speech == "description":
+            print("describing")
+            describe(imagehub, system, angles, times)
+        else:
+            
 
-        if obj["mode"] != "":
-            if obj["mode"] == "l":
-                localize(imagehub, system, angles, times)
-            elif obj["mode"] == "d":
-                describe(imagehub, system, angles, times)
 
 def localize(imagehub, system, angles, times):
     for angle in range(len(angles)-1):

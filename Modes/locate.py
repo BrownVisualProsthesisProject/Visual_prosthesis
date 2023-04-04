@@ -96,20 +96,11 @@ if __name__ == "__main__":
 
         # Show processed frame.
         cv2.imshow("processed frame", frame)
-        key_pressed = cv2.waitKey(1)
-        if key_pressed == ord("/") or key_pressed == ord("7"):
-            mode = "d"
-        elif key_pressed == ord("*") or key_pressed == ord("-"):
-            mode = "l"
-
-        if mode != "":
-            if key_stroke_counter < 3:
-                key_stroke_counter+=1
-            else:
-                mode = ""
-                key_stroke_counter = 0
-        
-        print("The mode is ", mode)
+        if cv2.waitKey(1) == ord("q"):
+            mode = "k"
+            for i in range(3):
+                send_json(locate_socket, x_locs, detected_classes, mode)
+            break
         # Do not send information to sound system when len(detected_classes)==0.
         if not x_locs:
             continue

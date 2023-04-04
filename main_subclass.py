@@ -15,6 +15,8 @@ import simplejpeg
 from Text2Voice.utils import text2voice
 from pydub import AudioSegment
 from pydub.playback import play
+import os
+import signal
 
 def start_key_listener(currentKey):
     """Keyboard listener."""
@@ -133,8 +135,15 @@ while True:
     if cv2.waitKey(1) == ord("q"):
         if current_stream:
             current_stream.terminate()
+            current_stream.wait()
+            current_stream = None
+            print("current stream finished")
             if audio_stream:
                 audio_stream.terminate()
+                audio_stream.kill()
+                audio_stream.wait()
+                audio_stream = None
+                print("audio stream finished")
         break
 
 # Close opencv windows. Check flush.
