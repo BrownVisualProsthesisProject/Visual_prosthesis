@@ -300,20 +300,20 @@ def third_approach():
     result_queue = queue.Queue()
     record_thread = threading.Thread(target=record_audio,
                      args=(audio_queue, energy, pause, dynamic_energy))
-    
+    record_thread.start()
     transcribe_thread = threading.Thread(target=transcribe_forever,
                      args=(audio_queue, result_queue, audio_model))
     time.sleep(4)
     transcribe_thread.start()
     
     while True:
-        record_thread.start()
+
         speech = result_queue.get() 
         speech = re.sub(r'\s+', '', speech).lower().replace(".", "")
         print(speech)
         if speech == "" or "thank" in speech or "clock" in speech or "sorry" in speech:
             continue
-        record_thread.join()
+
         if speech == "locate":
             print("localizing")
             localize(imagehub, system, angles, times)
