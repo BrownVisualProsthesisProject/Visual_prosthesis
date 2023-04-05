@@ -113,6 +113,7 @@ def record_audio(audio_queue, energy, pause, dynamic_energy):
         i = 0
         while True:
             #get and save audio to wav file
+            r.adjust_for_ambient_noise(source, duration=0.2)
             audio = r.listen(source)
 
             torch_audio = torch.from_numpy(np.frombuffer(audio.get_raw_data(), np.int16).flatten().astype(np.float32) / 32768.0)
@@ -290,7 +291,7 @@ def third_approach():
     angles = [0,45,75,105,135,180]
     times = ["two","one","twelve","eleven","ten"]
 
-    energy = 350
+    energy = 400
     pause = 0.8
     dynamic_energy = False
 
@@ -303,13 +304,15 @@ def third_approach():
     transcribe_thread = threading.Thread(target=transcribe_forever,
                      args=(audio_queue, result_queue, audio_model))
     record_thread.start()
+    time.sleep(4)
     transcribe_thread.start()
-    time.sleep(1)
     
     while True:
         speech = result_queue.get() 
         speech = re.sub(r'\s+', '', speech).lower().replace(".", "")
         print(speech)
+        if speech == "":
+            continue
         if speech == "locate":
             print("localizing")
             localize(imagehub, system, angles, times)

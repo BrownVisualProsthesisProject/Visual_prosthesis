@@ -66,6 +66,7 @@ def choose_mode(currentKey, audios):
 
     elif currentKey == "3" or currentKey == "4" or currentKey == "5" :
         play(audios["localization"])
+        
         if currentKey == "3":
             audio_stream = subprocess.Popen([python_version, 'Modes/3d_locate_sound.py', "--approach", "1"]) #type 1
         elif currentKey == "4":
@@ -73,7 +74,7 @@ def choose_mode(currentKey, audios):
         else:
             audio_stream = subprocess.Popen([python_version, 'Modes/3d_locate_sound.py', "--approach", "3"]) #type 3
         
-        time.sleep(2)
+        time.sleep(4)
         current_stream = subprocess.Popen([python_version, 'Modes/locate.py'],
                     bufsize=0)
 
