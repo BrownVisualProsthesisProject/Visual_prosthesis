@@ -66,7 +66,7 @@ def choose_mode(currentKey, audios):
 
     elif currentKey == "3" or currentKey == "4" or currentKey == "5" :
         play(audios["localization"])
-        
+
         if currentKey == "3":
             audio_stream = subprocess.Popen([python_version, 'Modes/3d_locate_sound.py', "--approach", "1"]) #type 1
         elif currentKey == "4":
@@ -81,7 +81,7 @@ def choose_mode(currentKey, audios):
         
     return current_stream,audio_stream
 
-python_version = "python3"
+python_version = "python3.8"
 # Program starts (main function)
 last_key = ""
 currentKey = ""
@@ -131,7 +131,7 @@ while True:
 
     # Grab new frame.
     ret, frame = webcam.read()
-    if not frame:
+    if not ret:
         print("Error capturing frame.")
         current_stream, audio_stream = close_streams(current_stream, audio_stream)
         break

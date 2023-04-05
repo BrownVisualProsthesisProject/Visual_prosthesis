@@ -311,7 +311,7 @@ def third_approach():
         speech = result_queue.get() 
         speech = re.sub(r'\s+', '', speech).lower().replace(".", "")
         print(speech)
-        if speech == "":
+        if speech == "" or "thank" in speech or "clock" in speech or "sorry" in speech:
             continue
         record_thread.join()
         if speech == "locate":
