@@ -311,7 +311,7 @@ def third_approach():
         speech = result_queue.get() 
         speech = re.sub(r'\s+', '', speech).lower().replace(".", "")
         print(speech)
-        if speech == "" or "thank" in speech or "clock" in speech or "sorry" in speech:
+        if speech == "" or "thank" in speech or "clock" in speech or "sorry" in speech or len(speech)>18:
             continue
 
         if speech == "locate":
