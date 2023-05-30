@@ -71,8 +71,8 @@ if __name__ == "__main__":
         # Get labels and bounding boxes coordinates.
         labels = results.xyxyn[0][:, -1].cpu().numpy()
         cord = results.xyxyn[0][:, :-1].cpu().numpy()
-        x_locs = []
-        detected_classes = []
+        x_locs = [0]*len(labels)
+        detected_classes = [0]*len(labels)
 
         for i in range(len(labels)):
             row = cord[i]
@@ -91,8 +91,8 @@ if __name__ == "__main__":
             cv2.rectangle(frame, (x1, y1), (x2, y2), bgr, 2)
             cv2.putText(frame, classes[int(labels[i])], (x1, y1), label_font, 2, bgr, 2)
 
-            x_locs.append(x / x_shape)
-            detected_classes.append(classes[int(labels[i])])
+            x_locs[i] = x / x_shape
+            detected_classes[i] = classes[int(labels[i])]
 
         # Show processed frame.
         cv2.imshow("processed frame", frame)

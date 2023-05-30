@@ -34,13 +34,6 @@ def start_key_listener(currentKey):
     listener.start()
     return currentKey
 
-def send_frame(sender, host_name, jpeg_quality, frame):
-    """Encodes frame and sends it to port."""
-    jpg_buffer = simplejpeg.encode_jpeg(frame, 
-                quality=jpeg_quality, 
-                colorspace='BGR')
-    sender.send_jpg(host_name, jpg_buffer)
-
 def kill_mode(current_stream, audio_stream):
     """Terminates current stream mode safely."""
     if current_stream:
@@ -61,7 +54,7 @@ def choose_mode(currentKey, audios):
     elif currentKey == "2":
         current_stream = subprocess.Popen([python_version, 'Modes/easy.py'],
                     bufsize=0)
-        audio_stream = None
+        audio_stream = subprocess.Popen([python_version, 'Modes/hand_sound.py', "--approach", "3"]) #type 3
         play(audios["ocr"])
 
     elif currentKey == "3" or currentKey == "4" or currentKey == "5" :
@@ -81,7 +74,7 @@ def choose_mode(currentKey, audios):
         
     return current_stream,audio_stream
 
-python_version = "python3.8"
+python_version = "python3"
 # Program starts (main function)
 last_key = ""
 currentKey = ""
@@ -92,21 +85,9 @@ currentKey = start_key_listener(currentKey)
 # Starts text to voice engine.
 engine = text2voice()
 
-# Initializing and starting multi-threaded queue webcam input stream.
-# Accept connections on all tcp addresses, port 5557
-sender = imagezmq.ImageSender(connect_to='tcp://127.0.0.1:5557', REQ_REP=False)
-host_name = socket.gethostname() 
-
-# Initialize webcam and allow camera sensor to warm up.
-webcam = cv2.VideoCapture(0) 
-time.sleep(1.0)
-
 # Initialize current stream variable.
 current_stream = None
 audio_stream = None
-
-# JPEG quality, 0 - 100 for ZMQ communication.
-jpeg_quality = 95
 
 # Audio files for modes.
 audios = {"localization": AudioSegment.from_wav("./audios/localization.wav"),
@@ -129,20 +110,12 @@ def close_streams(current_stream, audio_stream):
 
 while True:
 
-    # Grab new frame.
-    ret, frame = webcam.read()
-    if not ret:
-        print("Error capturing frame.")
-        current_stream, audio_stream = close_streams(current_stream, audio_stream)
-        break
-    # Send frame to clients.
-    send_frame(sender, host_name, jpeg_quality, frame)
-    
-    # Show raw frame.
-    cv2.imshow("frame", frame)
-
     # Change current mode.
-    if currentKey != last_key and currentKey in "12345":
+    if currentKey != last_key and currentKey in "12345q":
+
+        if currentKey == "q":
+            close_streams(current_stream, audio_stream)
+            break
         last_key = currentKey
 
         # Kill current stream mode.
@@ -150,12 +123,3 @@ while True:
             
         # Initialize/switch process.
         current_stream, audio_stream = choose_mode(currentKey, audios)
-
-    
-    # Press q to end program.
-    if cv2.waitKey(1) == ord("q"):
-        close_streams(current_stream, audio_stream)
-        break
-
-# Close opencv windows. Check flush.
-cv2.destroyAllWindows()
