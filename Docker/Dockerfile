@@ -1,7 +1,7 @@
 FROM nvcr.io/nvidia/l4t-base:r32.7.1
-
 ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ="America/New_York"
+RUN ls ./
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
       git \
@@ -30,6 +30,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
+
 RUN python3.8 -m pip install --upgrade pip
 RUN python3.8 -m pip install --upgrade setuptools gdown wheel
 
@@ -40,14 +41,28 @@ RUN python3.8 -m pip install torch-*.whl
 # torchvision 0.12.0
 RUN gdown https://drive.google.com/uc?id=1m0d8ruUY8RvCP9eVjZw4Nc8LAwM8yuGV
 RUN python3.8 -m pip install torchvision-*.whl
-
-RUN git clone -b demo https://github.com/BrownVisualProsthesisProject/Visual_prosthesis
+RUN python3.8 -m pip install scikit-image==0.17.2
+RUN ls
+RUN git clone -b luxonis https://github.com/BrownVisualProsthesisProject/Visual_prosthesis
 WORKDIR Visual_prosthesis
 RUN python3.8 -m pip install --upgrade pip
 RUN python3.8 -m pip install -r requirements_jetson.txt
 RUN python3.8 -m pip uninstall opencv-python-headless opencv-python opencv-contrib-python -y
 RUN python3.8 -m pip install opencv-python opencv-contrib-python
 RUN python3.8 -m  pip install protobuf==3.20.3 --upgrade
+RUN python3.8 -m pip install pygame gtts ultralytics fuzzywuzzy
+RUN git clone https://github.com/mallorbc/whisper_mic && cd whisper_mic && \
+    python3.8 -m pip install -r requirements.txt && cd ..
+
 
 RUN cp ./Docker/asound.conf /etc
 
+RUN apt-get update && apt-get install -y wget build-essential cmake pkg-config libjpeg-dev libtiff5-dev libavcodec-dev libavformat-dev libswscale-dev libv4l-dev libxvidcore-dev libx264-dev libgtk2.0-dev libgtk-3-dev libatlas-base-dev gfortran git
+
+ADD docker_dependencies.sh .
+RUN ./docker_dependencies.sh
+
+ADD ./depthai ./depthai
+
+RUN ls
+RUN python3.8 ./depthai/install_requirements.py
