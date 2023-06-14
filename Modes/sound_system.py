@@ -21,14 +21,7 @@ class Sound_System():
         sound = pygame.mixer.Sound("./audios/sentence.mp3")
         sound.play()
     
-    def describe_pos_w_depth(self, cont_classes, clock, understand_flag=True, rho=0, theta=90, phi=0):
-        if not understand_flag:
-            sentence = "Sorry, I can't locate that."
-            tts = gTTS(sentence, lang='en', slow=False)
-            tts.save("./audios/sentence.mp3") 
-            sound = pygame.mixer.Sound("./audios/sentence.mp3")
-            sound.play()
-            return
+    def describe_pos_w_depth(self, cont_classes, clock):
 
         sentence = ""
         num_items = len(cont_classes)
@@ -54,16 +47,8 @@ class Sound_System():
         sound = pygame.mixer.Sound("./audios/sentence.mp3")
         sound.play()
 
-    def describe_position(self, cont_classes, clock, understand_flag=True, rho=0, theta=90, phi=0):
-                
-        if not understand_flag:
-            sentence = "Sorry, I can't locate that."
-            tts = gTTS(sentence, lang='en', slow=False)
-            tts.save("./audios/sentence.mp3") 
-            sound = pygame.mixer.Sound("./audios/sentence.mp3")
-            sound.play()
-            return
-
+    def describe_position(self, cont_classes, clock):
+        
         sentence = ""
         num_items = len(cont_classes)
         for cls in cont_classes:

@@ -54,7 +54,7 @@ def record_audio(audio_queue, energy=360, pause=0.55, dynamic_energy=False):
     r.pause_threshold = pause
     r.dynamic_energy_threshold = dynamic_energy
 
-    with sr.Microphone(sample_rate=16000) as source:
+    with sr.Microphone(device_index=7, sample_rate=16000) as source:
         print("Say something!")
         i = 0
         while True:

@@ -103,16 +103,16 @@ labels = {
 "hair drier": 78,
 "toothbrush": 79,
 "localization":80,
-"describe":81
+"description":81
 }
 
 def find_closest_match(word):
     max_score = -1
     closest_match = None
     word_cleaned = word.translate(str.maketrans('', '', string.punctuation))
+    print(word_cleaned)
     for key in labels:
-        key_cleaned = key.translate(str.maketrans('', '', string.punctuation))
-        score = fuzz.ratio(word_cleaned.lower(), key_cleaned.lower())
+        score = fuzz.ratio(word_cleaned, key)
         if score > max_score:
             max_score = score
             closest_match = key
@@ -175,7 +175,7 @@ def record_audio(audio_queue, energy, pause, dynamic_energy):
             audio_data = torch_audio
             print("mean, ",np.mean(audio_data.numpy()),"std, ",np.std(audio_data.numpy()),len(audio_data))
             if (
-                np.std(audio_data.numpy()) >= 0.01
+                np.std(audio_data.numpy()) >= 0.009
                 and len(audio_data) < 2.9 * 16000
             ):
                 audio_queue.put_nowait(audio_data)
@@ -189,44 +189,6 @@ def transcribe_forever(audio_queue, result_queue, audio_model):
         result = audio_model.transcribe(audio_data,language='english')
         speech = result["text"]
         result_queue.put_nowait(speech)
-
-def third_approach():
-    """Sound queues for fix point hand guiding."""
-    system = Sound_System()
-    # Subscribes to all topics
-    phi = 0
-    rho = 0
-
-    # create a dictionary to map move values to sound file names
-    move_sounds = {
-        "up": "up.wav",
-        "down": "down.wav",
-        "left": "left.wav",
-        "right": "right.wav",
-        "notification": "notification.wav",
-    }
-
-    hostname = "tcp://127.0.0.1:5559"  # Use to receive from localhost
-    # hostname = "192.168.86.38"  # Use to receive from other computer
-    port = 5559
-
-    imagehub = MessageStreamSubscriberEvent(hostname, port)
-
-    while True:
-
-        message = imagehub.recv_msg()
-
-        if not message:
-            continue
-        obj = json.loads(message)
-        print(obj["move"])
-        # get the sound file name based on the move value
-        sound_file = move_sounds[obj["move"]]
-
-        # play the sound
-        system.play_sound(sound_file, rho, 0, phi)
-
-        time.sleep(2)
 
 
 def first_approach():
@@ -242,7 +204,7 @@ def first_approach():
     times = ["two","one","twelve","eleven","ten"]
 
     energy = 360
-    pause = 0.4
+    pause = 0.5
     dynamic_energy = False
 
     audio_model = whisper.load_model("base")
@@ -273,33 +235,36 @@ def first_approach():
             continue
 
         closest_match = find_closest_match(speech)
-        message = imagehub.recv_msg()
-        obj = json.loads(message)
-        print("========",closest_match)
+        if closest_match :
+            message = imagehub.recv_msg()
+            obj = json.loads(message)
+            print("========",closest_match)
+            if closest_match == "description":
+                describe(imagehub, system, times)
+            elif closest_match == "localization":
+                localization(imagehub, system, angles, times)
+            elif closest_match in labels and closest_match in obj["labels"]:
+                message = imagehub.recv_msg()
+                obj = json.loads(message)
+                detections = zip(obj["x_locs"],obj["labels"], obj["depth"],obj["y_locs"])
+                detections = sorted(detections, key=lambda tup: tup[2])
+                
+                for i in range(len(detections)):
+                    if detections[i][1] == closest_match:
+                        print("========",detections[i][2])
+                        if detections[i][2] < 1.2*1000:
+                            grasp(system, detections[i], obj["x_shape"], obj["y_shape"])
+                        else:
+                            localize(imagehub, system, angles, times, closest_match)
+                        break
+            else:
+                system.say_sentence("Sorry I cant locate that")
 
-        #if closest_match and closest_match == "localization":
-        #    localize(imagehub, system, angles, times)
-
-        if  closest_match and closest_match in labels and closest_match in obj["labels"]:
-            detections = zip(obj["x_locs"],obj["labels"], obj["depth"],obj["y_locs"])
-            detections = sorted(detections, key=lambda tup: tup[2])
-            
-            for i in range(len(detections)):
-                if detections[i][1] == closest_match:
-                    print("========",detections[i][2])
-                    if detections[i][2] < 1.2*1000:
-                        grasp(imagehub, system, angles, times, closest_match, detections[i])
-                    else:
-                        localize(imagehub, system, angles, times, closest_match)
-                    break
-        else:
-            system.describe_position(None, None, False)
-
-def grasp(imagehub, system, angles, times, speech, grasping_memory):
+def grasp(system, grasping_memory, x_shape, y_shape):
 
     obj_x,label,depth,obj_y = grasping_memory
     
-    movement = calculate_distance(obj_x, obj_y, 1280, 720)
+    movement = calculate_distance(obj_x, obj_y, x_shape, y_shape)
     sentence = f"{movement} about {depth_to_feet(depth)} feet"
 
     system.say_sentence(sentence)
@@ -308,16 +273,7 @@ def grasp(imagehub, system, angles, times, speech, grasping_memory):
     
 
 def localize(imagehub, system, angles, times, cls=None):
-    """message = imagehub.recv_msg()
-    obj = json.loads(message)
-    if not obj["hand"]:
-        sentence = "I cant see your hand."
-        system.say_sentence(sentence)
-        time.sleep(3.2)
-        return
-    else:
-        if"""
-    
+
     message = imagehub.recv_msg()
     obj = json.loads(message)
     detections = zip(obj["x_locs"],obj["labels"], obj["depth"])
@@ -332,7 +288,6 @@ def localize(imagehub, system, angles, times, cls=None):
                 
             if angles[angle] <= scaled_position*180 <= angles[angle+1]:
                 # here we count 
-                print(detections[i],scaled_position*180)
                 if cls and detections[i][1] != cls:
                     continue
                 feet = depth_to_feet(detections[i][2])
@@ -349,10 +304,72 @@ def localize(imagehub, system, angles, times, cls=None):
             print(class_counts)
             system.describe_pos_w_depth(class_counts, times[angle])
                 #system.play_sound("person_slow" + ".wav", rho, scaled_position, phi)
-            time.sleep(3.3)
+            time.sleep(3.5)
             #here we say what we count.
             #we need a new sound system that can generate the sentence from the dictionary
             #checar tts en jetson y SR en jetson
+
+def localization(imagehub, system, angles, times):
+
+    
+    message = imagehub.recv_msg()
+    if message:
+        obj = json.loads(message)
+        detections = zip(obj["x_locs"],obj["labels"], obj["depth"])
+        detections = sorted(detections, key=lambda tup: tup[0])
+        
+
+        for angle in range(len(angles)-1):
+            class_counts = {}
+            for i in range(len(detections)):
+                if detections[i][1] == 0: continue
+                scaled_position = (1.0-detections[i][0])
+                    
+                if angles[angle] <= scaled_position*180 <= angles[angle+1]:
+                    # here we count 
+                    feet = depth_to_feet(detections[i][2])
+                    if detections[i][1] in class_counts:
+                        class_counts[detections[i][1]].append(feet)
+                    else:
+                        class_counts[detections[i][1]] = [feet]
+
+                elif scaled_position > angles[angle+1]:
+                    break
+                
+            if class_counts:
+                print(class_counts)
+                system.describe_pos_w_depth(class_counts, times[angle])
+                    #system.play_sound("person_slow" + ".wav", rho, scaled_position, phi)
+                time.sleep(3.8)
+                #here we say what we count.
+                #we need a new sound system that can generate the sentence from the dictionary
+                #checar tts en jetson y SR en jetson
+            
+def describe(imagehub, system, times):
+
+    message = imagehub.recv_msg()
+        
+    if message:
+        
+        obj = json.loads(message)
+        detections = zip(obj["x_locs"],obj["labels"])
+        detections = sorted(detections, key=lambda tup: tup[0], reverse=True)
+        class_counts = {}
+            #could be faster y falta generar los audios
+        for i in range(len(detections)):
+
+
+            if detections[i][1] == 0: continue
+
+            if detections[i][1] in class_counts:
+                class_counts[detections[i][1]] += 1
+            else:
+                class_counts[detections[i][1]] = 1
+
+            
+        if class_counts:
+            print(class_counts)
+            system.describe_scene(class_counts, times[0])
 
 if __name__ == "__main__":
 

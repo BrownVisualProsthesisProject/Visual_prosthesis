@@ -5,16 +5,23 @@ import json
 import random
 import sys
 import math
+from torch.cuda import amp
 
 # Third party modules
 import cv2
+import mediapipe as mp
 import numpy as np
 import torch
 import zmq
 import depthai as dai
+from super_gradients.training import models
+
+# Local modules
+from Video_stream_sub import VideoStreamSubscriber
+from ultralytics import YOLO
 
 def calc_angle(frame, offset, HFOV):
-    return math.atan(math.tan(HFOV / 2.0) * offset / (frame.shape[1] / 2.0))
+	return math.atan(math.tan(HFOV / 2.0) * offset / (frame.shape[1] / 2.0))
 
 def send_json(locate_socket, x_locs, y_locs, x_shape, y_shape, detected_classes, depth):
 	"""Sends json data for sound system."""
@@ -37,10 +44,15 @@ if __name__ == "__main__":
 	locate_socket = context.socket(zmq.PUB)
 	locate_socket.bind("tcp://127.0.0.1:5559")
 
+	mp_drawing = mp.solutions.drawing_utils
+	mp_drawing_styles = mp.solutions.drawing_styles
+	mp_hands = mp.solutions.hands
+	BLUE_COLOR = (255, 0, 0)
+
 	# Optional. If set (True), the ColorCamera is downscaled from 1080p to 720p.
 	# Otherwise (False), the aligned depth is automatically upscaled to 1080p
 	downscaleColor = True
-	fps = 20
+	fps = 30
 	# The disparity is computed at this resolution, then upscaled to RGB resolution
 	monoResolution = dai.MonoCameraProperties.SensorResolution.THE_400_P
 
@@ -99,10 +111,9 @@ if __name__ == "__main__":
 	right.out.link(stereo.right)
 	stereo.depth.link(depthOut.input)
 
+
 	# Load Yolov5 model.
-	model = torch.hub.load(
-		"ultralytics/yolov5", "yolov5s"
-	)  # or yolov5n - yolov5x6, custom
+	model = models.get("yolo_nas_s", pretrained_weights="coco")
 	# Box color.
 	bgr = (0, 255, 0)  # color of the box
 	# Get labels.
@@ -122,6 +133,12 @@ if __name__ == "__main__":
 		frameRgb = None
 		depthFrame = None
 
+		# Configure windows; trackbar adjusts blending ratio of rgb/depth
+		rgbWindowName = "rgb"
+		depthWindowName = "depth"
+
+		cv2.namedWindow(rgbWindowName)
+		cv2.namedWindow(depthWindowName)
 		device.setIrLaserDotProjectorBrightness(0) # in mA, 0..1200
 		device.setIrFloodLightBrightness(0) # in mA, 0..1500
 
@@ -130,8 +147,7 @@ if __name__ == "__main__":
 		latestPacket = {}
 		latestPacket["rgb"] = None
 		latestPacket["depth"] = None
-		HFOV = np.deg2rad(69.0)
-		#HFOV = np.deg2rad(90.0)
+		HFOV = np.deg2rad(68.7938003540039)
 
 		while True:
 
@@ -146,7 +162,7 @@ if __name__ == "__main__":
 			if latestPacket["rgb"]:
 				frameRgb = latestPacket["rgb"].getCvFrame()
 				frameRgb = cv2.resize(frameRgb, (1248, 936))
-				#cv2.imshow(rgbWindowName, frameRgb)
+				cv2.imshow(rgbWindowName, frameRgb)
 
 			if latestPacket["depth"]:
 				depthFrame = latestPacket["depth"].getFrame()
@@ -155,16 +171,26 @@ if __name__ == "__main__":
 				min_depth = np.percentile(depthAux, 1)
 				max_depth = np.percentile(depthFrame, 99)
 				depthFrameColor = np.interp(depthFrame, (min_depth, max_depth), (0, 255)).astype(np.uint8)
-				#depthFrameColor = cv2.applyColorMap(depthFrameColor, cv2.COLORMAP_JET)
-				#cv2.imshow("depth", depthFrameColor)
+				depthFrameColor = cv2.applyColorMap(depthFrameColor, cv2.COLORMAP_JET)
+				cv2.imshow("depth", depthFrameColor)
 
 			if frameRgb is not None and depthFrame is not None:
 				# Run object detection inference over frame.
 				results = model(frameRgb)
+				
+				results = model.predict(frameRgb, conf=0.53)
+				prediction_objects = list(results._images_prediction_lst)[0]
+				bboxes = prediction_objects.prediction.bboxes_xyxy
+
+				int_labels = prediction_objects.prediction.labels.astype(int)
+				class_names = prediction_objects.class_names
+				pred_classes = [class_names[i] for i in int_labels]
 
 				# Get labels and bounding boxes coordinates.
-				labels = results.xyxyn[0][:, -1].cpu().numpy()
-				cord = results.xyxyn[0][:, :-1].cpu().numpy()
+				data = results[0].boxes.data.cpu().numpy()
+				labels = data[:, -1]
+				cord = data[:, :-1]
+				print(labels,cord)
 
 				x_locs = [0]*len(labels)
 				y_locs = [0]*len(labels)
@@ -177,10 +203,10 @@ if __name__ == "__main__":
 					if row[4] < 0.53:
 						continue
 
-					x1 = int(row[0] * x_shape) 
-					y1 = int(row[1] * y_shape)
-					x2 = int(row[2] * x_shape)
-					y2 = int(row[3] * y_shape)
+					x1 = int(row[0])
+					y1 = int(row[1])
+					x2 = int(row[2])
+					y2 = int(row[3])
 
 					x = x1 + (x2 - x1) // 2
 					y = y1 + (y2 - y1) // 2
@@ -204,8 +230,8 @@ if __name__ == "__main__":
 					object_depth[i] = distance
 				
 				send_json(locate_socket, x_locs, y_locs, x_shape, y_shape, detected_classes, object_depth)
-				#blended_frame = cv2.addWeighted(frameRgb, .7, depthFrameColor, .3 , 0)
-				cv2.imshow("Blended Frame", frameRgb)
+				blended_frame = cv2.addWeighted(frameRgb, .9, depthFrameColor, .1 , 0)
+				cv2.imshow("Blended Frame", blended_frame)
 
 			if cv2.waitKey(1) == ord('q'):
 				break
