@@ -129,11 +129,12 @@ def calculate_distance(x_object, y_object, x_shape, y_shape):
     # Divide the frame into 9 sections
     section_width = x_shape // 3
     section_height = y_shape // 3
-    
+
     # Determine the section in which the object is located
     section_x = (x_object*x_shape) // section_width
     section_y = (y_object*y_shape) // section_height
     
+    print("sector x",section_x,"sector y", section_y)
     # Map the section to a movement direction
     if section_x == 0 and section_y == 0:
         direction = 'up left'
@@ -142,11 +143,11 @@ def calculate_distance(x_object, y_object, x_shape, y_shape):
     elif section_x == 0 and section_y == 2:
         direction = 'down left'
     elif section_x == 1 and section_y == 0:
-        direction = 'up left'
+        direction = 'up'
     elif section_x == 1 and section_y == 1:
         direction = 'in front of you'
     elif section_x == 1 and section_y == 2:
-        direction = 'down right'
+        direction = 'down'
     elif section_x == 2 and section_y == 0:
         direction = 'up right'
     elif section_x == 2 and section_y == 1:
@@ -263,7 +264,6 @@ def first_approach():
 def grasp(system, grasping_memory, x_shape, y_shape):
 
     obj_x,label,depth,obj_y = grasping_memory
-    
     movement = calculate_distance(obj_x, obj_y, x_shape, y_shape)
     sentence = f"{movement} about {depth_to_feet(depth)} feet"
 

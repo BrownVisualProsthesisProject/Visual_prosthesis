@@ -65,9 +65,9 @@ if __name__ == "__main__":
 
 	#Properties
 	camRgb.setBoardSocket(dai.CameraBoardSocket.RGB)
-	camRgb.setResolution(dai.ColorCameraProperties.SensorResolution.THE_12_MP)
+	camRgb.setResolution(dai.ColorCameraProperties.SensorResolution.THE_1080_P)
 	camRgb.setFps(fps)
-	if downscaleColor: camRgb.setIspScale(16, 39)
+	if downscaleColor: camRgb.setIspScale(2, 3)
 	# For now, RGB needs fixed focus to properly align with depth.
 	# This value was used during calibration
 	try:
@@ -90,7 +90,7 @@ if __name__ == "__main__":
 	stereo.setLeftRightCheck(True)
 	stereo.setSubpixel(False)
 	stereo.setExtendedDisparity(True) #best 
-	stereo.setOutputSize(1248, 936)
+	#stereo.setOutputSize(1248, 936)
 	stereo.setDepthAlign(dai.CameraBoardSocket.RGB)
 
 	# Linking
@@ -126,7 +126,7 @@ if __name__ == "__main__":
 		device.setIrFloodLightBrightness(0) # in mA, 0..1500
 
 		x_shape, y_shape = (1280,720)
-		x_shape, y_shape = (1248, 936) #with set outputsize
+		#x_shape, y_shape = (1248, 936) #with set outputsize
 		latestPacket = {}
 		latestPacket["rgb"] = None
 		latestPacket["depth"] = None
@@ -145,7 +145,7 @@ if __name__ == "__main__":
 				
 			if latestPacket["rgb"]:
 				frameRgb = latestPacket["rgb"].getCvFrame()
-				frameRgb = cv2.resize(frameRgb, (1248, 936))
+				#frameRgb = cv2.resize(frameRgb, (1248, 936))
 				#cv2.imshow(rgbWindowName, frameRgb)
 
 			if latestPacket["depth"]:
