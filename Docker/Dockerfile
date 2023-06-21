@@ -42,7 +42,7 @@ RUN python3.8 -m pip install torch-*.whl
 RUN gdown https://drive.google.com/uc?id=1m0d8ruUY8RvCP9eVjZw4Nc8LAwM8yuGV
 RUN python3.8 -m pip install torchvision-*.whl
 RUN python3.8 -m pip install scikit-image==0.17.2
-RUN ls
+RUN ls -a -h
 RUN git clone -b luxonis https://github.com/BrownVisualProsthesisProject/Visual_prosthesis
 WORKDIR Visual_prosthesis
 RUN python3.8 -m pip install --upgrade pip
@@ -66,3 +66,26 @@ ADD ./depthai ./depthai
 
 RUN ls
 RUN python3.8 ./depthai/install_requirements.py
+
+RUN apt-get update && \
+	apt-get install cmake build-essential libopencv-dev python3-pyaudio -y && \
+	apt remove --purge --auto-remove cmake -y && \
+	apt update && \
+	apt install -y software-properties-common lsb-release && \
+	apt clean all && \
+	wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null && \
+	apt-add-repository "deb https://apt.kitware.com/ubuntu/ $(lsb_release -cs) main" && \
+	apt update && \
+	apt install kitware-archive-keyring && \
+	rm /etc/apt/trusted.gpg.d/kitware.gpg && \
+	apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 42D5A192B819C5DA && \
+	apt update && apt install cmake -y
+
+RUN apt-get install libopenblas-base libopenmpi-dev 
+
+RUN git clone --recursive -b v0.11.0 https://github.com/pytorch/audio torchaudio && \
+    cd torchaudio && \
+    sed -i 's#  URL https://zlib.net/zlib-1.2.11.tar.gz#  URL https://zlib.net/fossils/zlib-1.2.11.tar.gz#g' third_party/zlib/CMakeLists.txt || echo "failed to patch torchaudio/third_party/zlib/CMakeLists.txt" && \
+    python3.8 setup.py install && \
+    cd ../ && \
+    rm -rf torchaudio
