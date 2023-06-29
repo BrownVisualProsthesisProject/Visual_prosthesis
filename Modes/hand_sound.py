@@ -23,7 +23,6 @@ from Constants import LABELS
 
 
 stop_flag = False
-mute_flag = False
 
 
 def find_closest_match(word):
@@ -52,7 +51,7 @@ def calculate_distance(x_object, y_object, x_shape, y_shape):
 
 	# Determine the section in which the object is located
 	section_x = (x_object*x_shape) // section_width
-	section_y = min(0,((y_object-.15)*y_shape) // section_height)
+	section_y = (max(y_object-.15,0.0)*y_shape) // section_height
 	
 	print("sector x",section_x,"sector y", section_y)
 	# Map the section to a movement direction
@@ -117,6 +116,7 @@ class CustomRecognizer(sr.Recognizer):
 			frames = collections.deque()
 			
 			while True:
+				
 				# handle waiting too long for phrase by raising an exception
 				elapsed_time += self.seconds_per_buffer
 				
@@ -180,10 +180,7 @@ def record_audio(audio_queue, energy, pause, dynamic_energy):
 		print("Say something!")
 		i = 0
 		global stop_flag
-		global mute_flag
 		while not stop_flag:
-			if mute_flag:
-				continue
             
 			#get and save audio to wav file 
 			audio_deque = r.listen(source)
@@ -196,7 +193,6 @@ def record_audio(audio_queue, energy, pause, dynamic_energy):
 			#):
 			audio_queue.put_nowait(torch_audio)
 			i += 1
-			mute_flag = True
 
 
 def transcribe_forever(audio_queue, result_queue, audio_model):
@@ -277,9 +273,6 @@ def first_approach():
 			else:
 				system.say_sentence("Sorry I cant locate that")
 		
-		global mute_flag
-		mute_flag = False
-
 def grasp(system, grasping_memory, x_shape, y_shape):
 
 	obj_x,label,depth,obj_y = grasping_memory
