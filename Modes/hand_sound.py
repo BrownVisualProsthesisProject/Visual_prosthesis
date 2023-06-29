@@ -23,7 +23,7 @@ from Constants import LABELS
 
 
 stop_flag = False
-
+mute_flag = False
 
 
 def find_closest_match(word):
@@ -52,7 +52,7 @@ def calculate_distance(x_object, y_object, x_shape, y_shape):
 
 	# Determine the section in which the object is located
 	section_x = (x_object*x_shape) // section_width
-	section_y = (y_object*y_shape) // section_height
+	section_y = min(0,((y_object-.15)*y_shape) // section_height)
 	
 	print("sector x",section_x,"sector y", section_y)
 	# Map the section to a movement direction
@@ -177,12 +177,14 @@ def record_audio(audio_queue, energy, pause, dynamic_energy):
 	r.pause_threshold = pause
 	r.dynamic_energy_threshold = dynamic_energy
 	with sr.Microphone(sample_rate=16000) as source:
-		print(source.CHUNK,source.SAMPLE_RATE)
 		print("Say something!")
 		i = 0
 		global stop_flag
+		global mute_flag
 		while not stop_flag:
-			print(stop_flag)
+			if mute_flag:
+				continue
+            
 			#get and save audio to wav file 
 			audio_deque = r.listen(source)
 			if not audio_deque: continue
@@ -194,6 +196,7 @@ def record_audio(audio_queue, energy, pause, dynamic_energy):
 			#):
 			audio_queue.put_nowait(torch_audio)
 			i += 1
+			mute_flag = True
 
 
 def transcribe_forever(audio_queue, result_queue, audio_model):
@@ -273,6 +276,9 @@ def first_approach():
 						break
 			else:
 				system.say_sentence("Sorry I cant locate that")
+		
+		global mute_flag
+		mute_flag = False
 
 def grasp(system, grasping_memory, x_shape, y_shape):
 
@@ -353,7 +359,7 @@ def localization(imagehub, system, angles, times):
 				print(class_counts)
 				system.describe_pos_w_depth(class_counts, times[angle])
 					#system.play_sound("person_slow" + ".wav", rho, scaled_position, phi)
-				time.sleep(3.8)
+				time.sleep(4)
 				#here we say what we count.
 				#we need a new sound system that can generate the sentence from the dictionary
 				#checar tts en jetson y SR en jetson
