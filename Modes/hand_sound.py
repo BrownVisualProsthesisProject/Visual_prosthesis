@@ -20,6 +20,7 @@ import math
 from rapidfuzz import fuzz
 import collections
 from Constants import LABELS
+import audioop
 
 
 stop_flag = False
@@ -32,13 +33,11 @@ def find_closest_match(word):
 	print(word_cleaned)
 	for key in LABELS:
 		score = fuzz.ratio(word_cleaned, key)
-		if score > max_score:
+		if score > .6 and score > max_score :
 			max_score = score
 			closest_match = key
-	if closest_match is not None:
-		return closest_match
-	else:
-		return None
+
+	return closest_match
 	
 def depth_to_feet(mm):
 	feet = mm / 304.8
@@ -90,7 +89,10 @@ class CustomRecognizer(sr.Recognizer):
 		self.pause_buffer_count = int(math.ceil(self.pause_threshold / self.seconds_per_buffer))  # number of buffers of non-speaking audio during a phrase, before the phrase should be considered complete
 		self.phrase_buffer_count = int(math.ceil(self.phrase_threshold / self.seconds_per_buffer))-2  # minimum number of buffers of speaking audio before we consider the speaking audio a phrase
 		self.non_speaking_buffer_count = int(math.ceil(self.non_speaking_duration / self.seconds_per_buffer))  # maximum number of buffers of non-speaking audio to retain before and after a phrase
-		
+		self.mean_noise = 0
+		self.num_samples = 0
+		self.mean_sum = 0
+
 	def listen(self, source, phrase_time_limit=2):
 		"""
 		Records a single phrase from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance, which it returns.
@@ -105,7 +107,6 @@ class CustomRecognizer(sr.Recognizer):
 
 		This operation will always complete within ``timeout + phrase_timeout`` seconds if both are numbers, either by returning the audio data, or by raising a ``speech_recognition.WaitTimeoutError`` exception.
 		"""
-
 		
 		print("pause", self.pause_buffer_count,"phrase buffer", self.phrase_buffer_count, "nonspeaking", self.non_speaking_buffer_count )
 		# read audio input for phrases until there is a phrase that is long enough
@@ -124,13 +125,15 @@ class CustomRecognizer(sr.Recognizer):
 				
 				#tensor_buffer = torch.from_numpy(np.frombuffer(buffer, np.int16).flatten().astype(np.float32) / 32768.0)
 				tensor_buffer = torch.frombuffer(buffer, dtype=torch.int16).float() / 32768.0
+				
 
 				frames.append(tensor_buffer)
-				if len(frames) > self.non_speaking_buffer_count:  # ensure we only keep the needed amount of non-speaking buffers
+				if len(frames) > self.non_speaking_buffer_count :  # ensure we only keep the needed amount of non-speaking buffers
 					frames.popleft()
 
 				# detect whether speaking has started on audio input
 				energy = self.model(tensor_buffer, 16000).item()
+				loudness = audioop.rms(buffer, source.SAMPLE_WIDTH)
 				if energy > self.energy_threshold: break
 
 
@@ -152,6 +155,7 @@ class CustomRecognizer(sr.Recognizer):
 
 				# check if speaking has stopped for longer than the pause threshold on the audio input
 				energy = self.model(tensor_buffer, 16000).item()
+				
 
 				if energy > self.energy_threshold:
 					pause_count = 0
@@ -177,13 +181,15 @@ def record_audio(audio_queue, energy, pause, dynamic_energy):
 	r.pause_threshold = pause
 	r.dynamic_energy_threshold = dynamic_energy
 	with sr.Microphone(sample_rate=16000) as source:
+		
+
 		print("Say something!")
 		i = 0
 		global stop_flag
 		while not stop_flag:
-            
 			#get and save audio to wav file 
 			audio_deque = r.listen(source)
+			print(audio_deque)
 			if not audio_deque: continue
 
 			torch_audio = torch.cat(tuple(audio_deque), dim=0)
@@ -205,7 +211,7 @@ def transcribe_forever(audio_queue, result_queue, audio_model):
 		result_queue.put_nowait(result["text"])
 
 
-def first_approach():
+def voice_control_mode():
 	hostname = 'tcp://127.0.0.1:5559'  # Use to receive from localhost
 	# hostname = "192.168.86.38"  # Use to receive from other computer
 	port = 5559
@@ -233,10 +239,11 @@ def first_approach():
 	transcribe_thread.start()
 
 	while True:
-
 		speech = result_queue.get() 
-		
+		print("speeeech",speech)
 		closest_match = find_closest_match(speech)
+		if not closest_match: 
+			continue
 		if len(closest_match)>14:
 			continue
 
@@ -248,7 +255,7 @@ def first_approach():
 			record_thread.join()
 			break
 
-		if closest_match :
+		if closest_match:
 			message = imagehub.recv_msg()
 			obj = json.loads(message)
 			print("=====",closest_match)
@@ -273,6 +280,52 @@ def first_approach():
 			else:
 				system.say_sentence("Sorry I cant locate that")
 		
+def keyboard_control_mode():
+	hostname = 'tcp://127.0.0.1:5559'  # Use to receive from localhost
+	# hostname = "192.168.86.38"  # Use to receive from other computer
+	port = 5559
+
+	imagehub = MessageStreamSubscriberEvent(hostname, port)
+	# Load sound system.
+	system = Sound_System()
+
+	angles = [0,45,75,105,135,180]
+	times = ["two","one","twelve","eleven","ten"]
+
+	time.sleep(4)
+
+	while True:
+		closest_match = input("label/list/find: ")
+
+		if closest_match == "close":
+			system.say_sentence("finishing")
+			break
+
+		if closest_match:
+			message = imagehub.recv_msg()
+			obj = json.loads(message)
+			print("=====",closest_match)
+			if closest_match == "list":
+				describe(imagehub, system, times)
+			elif closest_match == "find":
+				localization(imagehub, system, angles, times)
+			elif closest_match in obj["labels"]:
+				message = imagehub.recv_msg()
+				#obj = json.loads(message)
+				detections = zip(obj["x_locs"],obj["labels"], obj["depth"],obj["y_locs"])
+				detections = sorted(detections, key=lambda tup: tup[2])
+				
+				for i in range(len(detections)):
+					if detections[i][1] == closest_match:
+						print("====",detections[i][2])
+						if detections[i][2] < 1.2*1000:
+							grasp(system, detections[i], obj["x_shape"], obj["y_shape"])
+						else:
+							localize(imagehub, system, angles, times, closest_match)
+						break
+			else:
+				system.say_sentence("Sorry I cant locate that")
+
 def grasp(system, grasping_memory, x_shape, y_shape):
 
 	obj_x,label,depth,obj_y = grasping_memory
@@ -323,7 +376,6 @@ def localize(imagehub, system, angles, times, cls=None):
 
 def localization(imagehub, system, angles, times):
 
-	
 	message = imagehub.recv_msg()
 	if message:
 		obj = json.loads(message)
@@ -392,4 +444,6 @@ if __name__ == "__main__":
 	print(args.approach, type(args.approach))
 	time.sleep(3)
 	if args.approach == 1:
-		first_approach()
+		voice_control_mode()
+	elif args.approach == 2:
+		keyboard_control_mode()
