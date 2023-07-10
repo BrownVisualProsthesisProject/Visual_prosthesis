@@ -333,7 +333,8 @@ def grasp(system, grasping_memory, x_shape, y_shape):
 
 	obj_x,label,depth,obj_y = grasping_memory
 	movement = calculate_distance(obj_x, obj_y, x_shape, y_shape)
-	sentence = f"{movement} about {depth_to_feet(depth)} feet"
+	distance = depth_to_feet(depth)
+	sentence = f"{movement} about {distance} feet"
 
 	system.say_sentence(sentence)
 	time.sleep(3)
