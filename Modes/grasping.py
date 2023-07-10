@@ -12,6 +12,7 @@ import numpy as np
 import torch
 import zmq
 import depthai as dai
+import time 
 
 def calc_angle(frame, offset, HFOV):
     return math.atan(math.tan(HFOV / 2.0) * offset / (frame.shape[1] / 2.0))
@@ -132,6 +133,8 @@ if __name__ == "__main__":
 		latestPacket["depth"] = None
 		HFOV = np.deg2rad(69.0)
 		#HFOV = np.deg2rad(90.0)
+		frame_count = 0
+		start_time = time.time()
 
 		while True:
 
@@ -205,6 +208,15 @@ if __name__ == "__main__":
 				
 				send_json(locate_socket, x_locs, y_locs, x_shape, y_shape, detected_classes, object_depth)
 				#blended_frame = cv2.addWeighted(frameRgb, .7, depthFrameColor, .3 , 0)
+				# Increment frame count
+				frame_count += 1
+				
+				# Calculate FPS
+				end_time = time.time()
+				elapsed_time = end_time - start_time
+				fps = frame_count / elapsed_time
+				cv2.putText(frameRgb, "FPS: {:.2f}".format(fps), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+    
 				cv2.imshow("Blended Frame", frameRgb)
 
 			if cv2.waitKey(1) == ord('q'):

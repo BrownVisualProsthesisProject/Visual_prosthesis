@@ -297,14 +297,17 @@ def keyboard_control_mode():
 	while True:
 		closest_match = input("label/list/find: ")
 
+		print("=====",closest_match)
+
 		if closest_match == "close":
 			system.say_sentence("finishing")
+			time.sleep(2)
 			break
 
 		if closest_match:
 			message = imagehub.recv_msg()
 			obj = json.loads(message)
-			print("=====",closest_match)
+			
 			if closest_match == "list":
 				describe(imagehub, system, times)
 			elif closest_match == "find":
