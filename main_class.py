@@ -324,10 +324,8 @@ def frame2queue(show):
 
 					if cv2.waitKey(1) == ord('q'):
 						stop_flag = True
-						break
-
-
-		cv2.destroyAllWindows()
+						break				
+	cv2.destroyAllWindows()
 
 def grasp(system, grasping_memory, x_shape, y_shape):
 
