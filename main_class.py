@@ -6,7 +6,7 @@ import random
 import sys
 import math
 
-from custom_recognizer import CustomRecognizer
+from Modes.custom_recognizer import CustomRecognizer
 import speech_recognition as sr
 from Modes.message_stream import MessageStreamSubscriberEvent
 from Modes.sound_system import Sound_System
@@ -215,7 +215,7 @@ def frame2queue(show):
 	label_font = cv2.FONT_HERSHEY_COMPLEX
 
 	x_shape, y_shape = (1280,720)
-	HFOV = np.deg2rad(.0)
+	HFOV = np.deg2rad(70.0)
 
 	frame_count = 0
 	start_time = time.time()

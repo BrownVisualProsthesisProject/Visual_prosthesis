@@ -89,8 +89,7 @@ class CustomRecognizer(sr.Recognizer):
 				prob = self.model(tensor_buffer, 16000).item()
 				energy = audioop.rms(buffer, source.SAMPLE_WIDTH)
 				#print(source.SAMPLE_WIDTH)
-				print(energy)
-				if prob > self.energy_threshold and energy > 1.35*self.mean_noise: 
+				if prob > self.energy_threshold and energy > 1000: 
 					break
 
 			# read audio input until the phrase ends
