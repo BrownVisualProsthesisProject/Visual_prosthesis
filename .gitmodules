@@ -1,0 +1,3 @@
+[submodule "silero-vad"]
+	path = silero-vad
+	url = git@jorgechang:BrownVisualProsthesisProject/silero-vad.git
