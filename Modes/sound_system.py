@@ -36,9 +36,9 @@ class Sound_System():
             sentence+=","   
 
         if len(cont_classes[cls]) > 1:
-            sentence += f" at {clock} o clock, the closest at {min(cont_classes[cls])} feet"
+            sentence += f" at-{clock}-oclock, the-closest at{min(cont_classes[cls])}-feet"
         else:
-            sentence += f" at {clock} o clock, at {cont_classes[cls][0]} feet"
+            sentence += f" at-{clock}-oclock, at{cont_classes[cls][0]}-feet"
 
         print(sentence)
         tts = gTTS(sentence, lang='en', slow=False)
@@ -61,7 +61,7 @@ class Sound_System():
                 sentence+= cls
             sentence+=","   
 
-        sentence += f" at {clock} o clock"             
+        sentence += f" at-{clock}-oclock"             
         print(sentence)
         tts = gTTS(sentence, lang='en', slow=False)
         tts.save("./audios/sentence.mp3") 
@@ -84,7 +84,7 @@ class Sound_System():
                 sentence+= cls
             sentence+=","   
 
-        sentence += f" in the scene"             
+        sentence += f" in-the-scene"             
         print(sentence)
         tts = gTTS(sentence, lang='en', slow=False)
         tts.save("./audios/sentence.mp3") 

@@ -56,23 +56,23 @@ def calculate_distance(x_object, y_object, x_shape, y_shape):
 	print("sector x",section_x,"sector y", section_y)
 	# Map the section to a movement direction
 	if section_x == 0 and section_y == 0:
-		direction = 'up left'
+		direction = 'up-left'
 	elif section_x == 0 and section_y == 1:
 		direction = 'left'
 	elif section_x == 0 and section_y == 2:
-		direction = 'down left'
+		direction = 'down-left'
 	elif section_x == 1 and section_y == 0:
 		direction = 'up'
 	elif section_x == 1 and section_y == 1:
-		direction = 'in front of you'
+		direction = 'in-front-of-you'
 	elif section_x == 1 and section_y == 2:
 		direction = 'down'
 	elif section_x == 2 and section_y == 0:
-		direction = 'up right'
+		direction = 'up-right'
 	elif section_x == 2 and section_y == 1:
 		direction = 'right'
 	elif section_x == 2 and section_y == 2:
-		direction = 'down right'
+		direction = 'down-right'
 	
 	return direction
 
@@ -180,7 +180,7 @@ def voice_control_mode():
 							localize(imagehub, system, angles, times, closest_match)
 						break
 			else:
-				system.say_sentence("Sorry I cant locate that")
+				system.say_sentence("Sorry-I-cant-locate-that")
 		
 def keyboard_control_mode():
 	hostname = 'tcp://127.0.0.1:5559'  # Use to receive from localhost
@@ -232,13 +232,13 @@ def keyboard_control_mode():
 							localize(imagehub, system, angles, times, closest_match)
 						break
 			else:
-				system.say_sentence("Sorry I cant locate that")
+				system.say_sentence("Sorry-I-cant-locate-that")
 
 def grasp(system, grasping_memory, x_shape, y_shape):
 
 	obj_x,label,depth,obj_y = grasping_memory
 	movement = calculate_distance(obj_x, obj_y, x_shape, y_shape)
-	sentence = f"{movement} about {depth_to_feet(depth)} feet"
+	sentence = f"{movement} at{depth_to_feet(depth)}-feet"
 
 	system.say_sentence(sentence)
 	time.sleep(3)
