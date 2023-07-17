@@ -4,8 +4,6 @@ import speech_recognition as sr
 import math
 import audioop
 import collections
-import time
-import numpy as np
 
 class CustomRecognizer(sr.Recognizer):
 	# Special custom changes in this method
@@ -46,27 +44,6 @@ class CustomRecognizer(sr.Recognizer):
 		elapsed_time = 0  # number of seconds of audio read
 		buffer = b""  # an empty buffer means that the stream has ended and there is no data left to read
 
-
-		for i in range(15):
-			loudness = audioop.rms(buffer, source.SAMPLE_WIDTH)
-
-		while self.rms_flag:
-			# handle waiting too long for phrase by raising an exception
-			elapsed_time += self.seconds_per_buffer
-			buffer = source.stream.read(source.CHUNK)
-			loudness = audioop.rms(buffer, source.SAMPLE_WIDTH)
-			print(loudness)
-			self.mean_sum += loudness
-			#print(self.mean_sum, source.SAMPLE_WIDTH)
-			self.num_samples += 1
-
-			if elapsed_time>1:
-				
-				break
-		
-		self.mean_noise = self.mean_sum / self.num_samples
-		print(self.mean_noise)
-		elapsed_time = 0  # number of seconds of audio read
 
 		while True:
 			frames = collections.deque()

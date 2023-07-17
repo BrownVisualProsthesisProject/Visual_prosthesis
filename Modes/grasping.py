@@ -101,9 +101,8 @@ if __name__ == "__main__":
 	stereo.depth.link(depthOut.input)
 
 	# Load Yolov5 model.
-	model = torch.hub.load(
-		"ultralytics/yolov5", "yolov5s"
-	)  # or yolov5n - yolov5x6, custom
+	model = torch.hub.load('./yolov5', 'custom', path='./weights/yolov5s.pt', source='local') 
+	model.half() #should I img.half????
 	# Box color.
 	bgr = (0, 255, 0)  # color of the box
 	# Get labels.
@@ -148,6 +147,7 @@ if __name__ == "__main__":
 				
 			if latestPacket["rgb"]:
 				frameRgb = latestPacket["rgb"].getCvFrame()
+				
 				#frameRgb = cv2.resize(frameRgb, (1248, 936))
 				#cv2.imshow(rgbWindowName, frameRgb)
 
@@ -155,16 +155,19 @@ if __name__ == "__main__":
 				depthFrame = latestPacket["depth"].getFrame()
 				depthAux = depthFrame[depthFrame != 0]
 				if not depthAux.any(): continue
-				min_depth = np.percentile(depthAux, 1)
-				max_depth = np.percentile(depthFrame, 99)
-				depthFrameColor = np.interp(depthFrame, (min_depth, max_depth), (0, 255)).astype(np.uint8)
+				#min_depth = np.percentile(depthAux, 1)
+				#max_depth = np.percentile(depthFrame, 99)
+				#depthFrameColor = np.interp(depthFrame, (min_depth, max_depth), (0, 255)).astype(np.uint8)
 				#depthFrameColor = cv2.applyColorMap(depthFrameColor, cv2.COLORMAP_JET)
 				#cv2.imshow("depth", depthFrameColor)
 
 			if frameRgb is not None and depthFrame is not None:
 				# Run object detection inference over frame.
-				results = model(frameRgb)
-
+				start_time = time.time()
+				with torch.no_grad(): 
+					results = model(frameRgb)
+				end_time = time.time()
+				print(end_time-start_time)
 				# Get labels and bounding boxes coordinates.
 				labels = results.xyxyn[0][:, -1].cpu().numpy()
 				cord = results.xyxyn[0][:, :-1].cpu().numpy()
@@ -220,6 +223,7 @@ if __name__ == "__main__":
 				cv2.imshow("Blended Frame", frameRgb)
 
 			if cv2.waitKey(1) == ord('q'):
+
 				break
 
 			

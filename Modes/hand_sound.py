@@ -8,19 +8,13 @@ import string
 # Local modules.
 from message_stream import MessageStreamSubscriberEvent
 from sound_system import Sound_System
-import matplotlib.pyplot as plt
 import speech_recognition as sr
 import whisper
 import queue
 import threading
-import numpy as np
 import torch
-import re
-import math
 from rapidfuzz import fuzz
-import collections
 from Constants import LABELS, INITIAL_PROMPT
-import audioop
 from custom_recognizer import CustomRecognizer
 
 
@@ -124,12 +118,13 @@ def voice_control_mode():
 
 	angles = [0,45,75,105,135,180]
 	times = ["two","one","twelve","eleven","ten"]
+	inverted_times = ["ten","eleven","twelve","one","two"]
 
 	energy = .5
 	pause = 0.5
 	dynamic_energy = False
 
-	audio_model = whisper.load_model("base.en")
+	audio_model = whisper.load_model("base.en", download_root="./weights")
 	audio_queue = queue.Queue()
 	result_queue = queue.Queue()
 	record_thread = threading.Thread(target=record_audio,
@@ -142,7 +137,6 @@ def voice_control_mode():
 
 	while True:
 		speech = result_queue.get() 
-		print("speeeech",speech)
 		closest_match = find_closest_match(speech)
 		if not closest_match: 
 			continue
@@ -151,10 +145,12 @@ def voice_control_mode():
 
 		if closest_match == "close":
 			system.say_sentence("finishing")
+			time.sleep(1.5)
 			global stop_flag
 			stop_flag = True
 			transcribe_thread.join()
 			record_thread.join()
+			system.close_mixer()
 			break
 
 		if closest_match:
@@ -164,7 +160,7 @@ def voice_control_mode():
 			if closest_match == "list":
 				describe(imagehub, system, times)
 			elif closest_match == "find":
-				localization(imagehub, system, angles, times)
+				localization(imagehub, system, angles, inverted_times)
 			elif closest_match in obj["labels"]:
 				message = imagehub.recv_msg()
 				#obj = json.loads(message)
@@ -193,7 +189,7 @@ def keyboard_control_mode():
 
 	angles = [0,45,75,105,135,180]
 	times = ["two","one","twelve","eleven","ten"]
-
+	inverted_times = ["ten","eleven","twelve","one","two"]
 	time.sleep(4)
 
 	while True:
@@ -206,7 +202,7 @@ def keyboard_control_mode():
 
 		if closest_match == "close":
 			system.say_sentence("finishing")
-			time.sleep(2)
+			system.close_mixer()
 			break
 
 		if closest_match:
@@ -216,7 +212,7 @@ def keyboard_control_mode():
 			if closest_match == "list":
 				describe(imagehub, system, times)
 			elif closest_match == "find":
-				localization(imagehub, system, angles, times)
+				localization(imagehub, system, angles, inverted_times)
 			elif closest_match in obj["labels"]:
 				message = imagehub.recv_msg()
 				#obj = json.loads(message)
@@ -241,7 +237,6 @@ def grasp(system, grasping_memory, x_shape, y_shape):
 	sentence = f"{movement} at{depth_to_feet(depth)}-feet"
 
 	system.say_sentence(sentence)
-	time.sleep(3)
 
 	
 
@@ -275,9 +270,8 @@ def localize(imagehub, system, angles, times, cls=None):
 			
 		if class_counts:
 			print(class_counts)
-			system.describe_pos_w_depth(class_counts, times[angle])
+			sentence = system.describe_pos_w_depth(class_counts, times[angle])
 				#system.play_sound("person_slow" + ".wav", rho, scaled_position, phi)
-			time.sleep(3.5)
 			#here we say what we count.
 			#we need a new sound system that can generate the sentence from the dictionary
 			#checar tts en jetson y SR en jetson
@@ -295,7 +289,7 @@ def localization(imagehub, system, angles, times):
 			class_counts = {}
 			for i in range(len(detections)):
 				if detections[i][1] == 0: continue
-				scaled_position = (1.0-detections[i][0])
+				scaled_position = detections[i][0]
 					
 				if angles[angle] <= scaled_position*180 <= angles[angle+1]:
 					# here we count 
@@ -310,9 +304,8 @@ def localization(imagehub, system, angles, times):
 				
 			if class_counts:
 				print(class_counts)
-				system.describe_pos_w_depth(class_counts, times[angle])
-					#system.play_sound("person_slow" + ".wav", rho, scaled_position, phi)
-				time.sleep(4)
+				sentence = system.describe_pos_w_depth(class_counts, times[angle])
+				#system.play_sound("person_slow" + ".wav", rho, scaled_position, phi)
 				#here we say what we count.
 				#we need a new sound system that can generate the sentence from the dictionary
 				#checar tts en jetson y SR en jetson
@@ -325,7 +318,7 @@ def describe(imagehub, system, times):
 		
 		obj = json.loads(message)
 		detections = zip(obj["x_locs"],obj["labels"])
-		detections = sorted(detections, key=lambda tup: tup[0], reverse=True)
+		detections = sorted(detections, key=lambda tup: tup[0])
 		class_counts = {}
 			#could be faster y falta generar los audios
 		for i in range(len(detections)):
@@ -341,7 +334,7 @@ def describe(imagehub, system, times):
 			
 		if class_counts:
 			print(class_counts)
-			system.describe_scene(class_counts, times[0])
+			sentence = system.describe_scene(class_counts, times[0])
 
 if __name__ == "__main__":
 

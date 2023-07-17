@@ -1,3 +1,6 @@
 [submodule "silero-vad"]
 	path = silero-vad
 	url = git@jorgechang:BrownVisualProsthesisProject/silero-vad.git
+[submodule "yolov5"]
+	path = yolov5
+	url = git@jorgechang:BrownVisualProsthesisProject/yolov5.git

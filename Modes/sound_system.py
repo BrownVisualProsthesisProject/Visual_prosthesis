@@ -1,5 +1,5 @@
-from gtts import gTTS
 import pygame
+import time
 
 def make_plural(string):
     if string.endswith(('s', 'x', 'z', 'ch', 'sh')):
@@ -15,11 +15,21 @@ class Sound_System():
 
         pygame.mixer.init()
     
-    def say_sentence(self, sentence):
-        tts = gTTS(sentence, lang='en', slow=False)
-        tts.save("./audios/sentence.mp3") 
-        sound = pygame.mixer.Sound("./audios/sentence.mp3")
-        sound.play()
+    def say_sentence(self, sentence): 
+        self.play_words(sentence)
+    
+    def play_words(self,sentence):
+        sentence = sentence.split()
+
+        for word in sentence:
+            sound_file = f"./audios/{word}.wav"
+            try:
+                sound = pygame.mixer.Sound(sound_file)
+                sound.play()
+                time.sleep(sound.get_length()-.15)  #
+            except pygame.error:
+                print(f"Sound file not found for word: {word}")
+
     
     def describe_pos_w_depth(self, cont_classes, clock):
 
@@ -33,19 +43,15 @@ class Sound_System():
                 sentence+="multiple " + make_plural(cls)
             else:
                 sentence+= cls
-            sentence+=","   
+            sentence+=" "
 
         if len(cont_classes[cls]) > 1:
-            sentence += f" at-{clock}-oclock, the-closest at{min(cont_classes[cls])}-feet"
+            sentence += f" at-{clock}-oclock the-closest at{min(cont_classes[cls])}-feet"
         else:
-            sentence += f" at-{clock}-oclock, at{cont_classes[cls][0]}-feet"
+            sentence += f" at-{clock}-oclock at{cont_classes[cls][0]}-feet" 
 
-        print(sentence)
-        tts = gTTS(sentence, lang='en', slow=False)
-        tts.save("./audios/sentence.mp3") 
-
-        sound = pygame.mixer.Sound("./audios/sentence.mp3")
-        sound.play()
+        self.play_words(sentence)
+        return sentence
 
     def describe_position(self, cont_classes, clock):
         
@@ -58,16 +64,13 @@ class Sound_System():
             if cont_classes[cls] > 1:
                 sentence+="multiple " + make_plural(cls)
             else:
-                sentence+= cls
-            sentence+=","   
+                sentence+= cls  
+            sentence+=" "
 
         sentence += f" at-{clock}-oclock"             
-        print(sentence)
-        tts = gTTS(sentence, lang='en', slow=False)
-        tts.save("./audios/sentence.mp3") 
 
-        sound = pygame.mixer.Sound("./audios/sentence.mp3")
-        sound.play()
+        self.play_words(sentence)
+        return sentence
 
 
     def describe_scene(self, cont_classes, clock, rho=0, theta=90, phi=0):
@@ -81,14 +84,14 @@ class Sound_System():
             if cont_classes[cls] > 1:
                 sentence+="multiple " + make_plural(cls)
             else:
-                sentence+= cls
-            sentence+=","   
+                sentence+= cls 
+            sentence+=" "
 
         sentence += f" in-the-scene"             
-        print(sentence)
-        tts = gTTS(sentence, lang='en', slow=False)
-        tts.save("./audios/sentence.mp3") 
 
-        sound = pygame.mixer.Sound("./audios/sentence.mp3")
-        sound.play()
+        self.play_words(sentence)
+        return sentence
+    
+    def close_mixer():
+        pygame.mixer.quit()
 
