@@ -235,7 +235,11 @@ def grasp(system, grasping_memory, x_shape, y_shape):
 
 	obj_x,label,depth,obj_y = grasping_memory
 	movement = calculate_distance(obj_x, obj_y, x_shape, y_shape)
-	sentence = f"{movement} at{depth_to_feet(depth)}-feet"
+	feet = depth_to_feet(depth)
+	if feet < 1.0:
+		sentence = f"{movement} at-less-than-1-feet"
+	else:
+		sentence = f"{movement} at{feet}-feet"
 
 	system.say_sentence(sentence)
 

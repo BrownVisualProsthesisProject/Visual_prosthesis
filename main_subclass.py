@@ -3,20 +3,9 @@
 # Standar modules
 import time
 import subprocess
-import socket
 
 # Third party modules
-import cv2
-import imagezmq
 from pynput import keyboard
-import simplejpeg
-
-# Local modules
-from Text2Voice.utils import text2voice
-from pydub import AudioSegment
-from pydub.playback import play
-import os
-import signal
 
 def start_key_listener(currentKey):
     """Keyboard listener."""
@@ -44,7 +33,7 @@ def kill_mode(current_stream, audio_stream):
         audio_stream = None
         time.sleep(0.006)
 
-def choose_mode(currentKey, audios):
+def choose_mode(currentKey):
     """Initialize or switch desired mode as a subprocess."""
     if currentKey == "1" or currentKey == "4":
         
@@ -54,16 +43,13 @@ def choose_mode(currentKey, audios):
         elif currentKey == "4":
             current_stream = subprocess.Popen([python_version, 'Modes/grasping.py',"--model", "yolov5m"])
             audio_stream = subprocess.Popen([python_version, 'Modes/hand_sound.py', "--approach", "2"]) #type 1
-        play(audios["grasping"])
 
     elif currentKey == "2":
         current_stream = subprocess.Popen([python_version, 'Modes/easy.py'],
                     bufsize=0)
         audio_stream = subprocess.Popen([python_version, 'Modes/hand_sound.py', "--approach", "3"]) #type 3
-        play(audios["ocr"])
 
     elif currentKey == "3" or currentKey == "4" or currentKey == "5" :
-        play(audios["localization"])
 
         if currentKey == "3":
             audio_stream = subprocess.Popen([python_version, 'Modes/3d_locate_sound.py', "--approach", "1"]) #type 1
@@ -87,17 +73,15 @@ currentKey = ""
 # Starts keyborad listner.
 currentKey = start_key_listener(currentKey)
 
-# Starts text to voice engine.
-engine = text2voice()
 
 # Initialize current stream variable.
 current_stream = None
 audio_stream = None
 
 # Audio files for modes.
-audios = {"localization": AudioSegment.from_wav("./audios/localization.wav"),
-            "ocr": AudioSegment.from_wav("./audios/ocr.wav"),
-            "grasping":AudioSegment.from_wav("./audios/grasping.wav")}
+#audios = {"localization": AudioSegment.from_wav("./audios/localization.wav"),
+#            "ocr": AudioSegment.from_wav("./audios/ocr.wav"),
+#            "grasping":AudioSegment.from_wav("./audios/grasping.wav")}
 
 def close_streams(current_stream, audio_stream):
     if current_stream:
@@ -127,4 +111,4 @@ while True:
         kill_mode(current_stream, audio_stream)
             
         # Initialize/switch process.
-        current_stream, audio_stream = choose_mode(currentKey, audios)
+        current_stream, audio_stream = choose_mode(currentKey)

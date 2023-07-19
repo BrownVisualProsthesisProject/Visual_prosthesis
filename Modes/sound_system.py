@@ -1,5 +1,6 @@
 import pygame
 import time
+from Constants import LABELS
 
 def make_plural(string):
     if string.endswith(('s', 'x', 'z', 'ch', 'sh')):
@@ -40,15 +41,25 @@ class Sound_System():
             if len(cont_classes)>1 and num_items == 0:
                 sentence+="and "
             if len(cont_classes[cls]) > 1:
-                sentence+="multiple " + make_plural(cls)
+                sentence+="multiple " + make_plural(LABELS[cls])
             else:
-                sentence+= cls
+                sentence+= LABELS[cls]
             sentence+=" "
 
         if len(cont_classes[cls]) > 1:
-            sentence += f" at-{clock}-oclock the-closest at{min(cont_classes[cls])}-feet"
+            if cont_classes[cls][0]<1.0:
+                sentence += f" at-{clock}-oclock the-closest at-less-than-1-feet"
+            else:
+                sentence += f" at-{clock}-oclock the-closest at{min(cont_classes[cls])}-feet"
+            
         else:
-            sentence += f" at-{clock}-oclock at{cont_classes[cls][0]}-feet" 
+            
+            if cont_classes[cls][0]<1.0:
+                sentence += f" at-{clock}-oclock at-less-than-1-feet" 
+            else:
+                sentence += f" at-{clock}-oclock at{cont_classes[cls][0]}-feet" 
+                
+            
 
         self.play_words(sentence)
         return sentence
@@ -62,9 +73,9 @@ class Sound_System():
             if len(cont_classes)>1 and num_items == 0:
                 sentence+="and "
             if cont_classes[cls] > 1:
-                sentence+="multiple " + make_plural(cls)
+                sentence+="multiple " + make_plural(LABELS[cls])
             else:
-                sentence+= cls  
+                sentence+= LABELS[cls]  
             sentence+=" "
 
         sentence += f" at-{clock}-oclock"             
@@ -82,9 +93,9 @@ class Sound_System():
             if len(cont_classes)>1 and num_items == 0:
                 sentence+="and "
             if cont_classes[cls] > 1:
-                sentence+="multiple " + make_plural(cls)
+                sentence+="multiple " + make_plural(LABELS[cls])
             else:
-                sentence+= cls 
+                sentence+= LABELS[cls] 
             sentence+=" "
 
         sentence += f" in-the-scene"             
