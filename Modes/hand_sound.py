@@ -201,6 +201,7 @@ def keyboard_control_mode():
 		print("=====",closest_match)
 
 		if closest_match == "close":
+			time.sleep(1.5)
 			system.say_sentence("finishing")
 			system.close_mixer()
 			break

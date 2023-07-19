@@ -47,10 +47,12 @@ def kill_mode(current_stream, audio_stream):
 def choose_mode(currentKey, audios):
     """Initialize or switch desired mode as a subprocess."""
     if currentKey == "1" or currentKey == "4":
-        current_stream = subprocess.Popen([python_version, 'Modes/grasping.py'])
+        
         if currentKey == "1":
+            current_stream = subprocess.Popen([python_version, 'Modes/grasping.py'])
             audio_stream = subprocess.Popen([python_version, 'Modes/hand_sound.py', "--approach", "1"]) #type 1
         elif currentKey == "4":
+            current_stream = subprocess.Popen([python_version, 'Modes/grasping.py',"--model", "yolov5m"])
             audio_stream = subprocess.Popen([python_version, 'Modes/hand_sound.py', "--approach", "2"]) #type 1
         play(audios["grasping"])
 
