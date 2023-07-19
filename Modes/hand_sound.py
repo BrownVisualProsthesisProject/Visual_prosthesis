@@ -124,7 +124,7 @@ def voice_control_mode():
 	pause = 0.5
 	dynamic_energy = False
 
-	audio_model = whisper.load_model("base.en", download_root="./weights")
+	audio_model = whisper.load_model("tiny.en", download_root="./weights")
 	audio_queue = queue.Queue()
 	result_queue = queue.Queue()
 	record_thread = threading.Thread(target=record_audio,

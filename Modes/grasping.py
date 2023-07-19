@@ -105,7 +105,7 @@ if __name__ == "__main__":
 
 	# Load Yolov5 model.
 	model = torch.hub.load('./yolov5', 'custom', path=f'./weights/{args.model}.pt', source='local') 
-	model.half() #should I img.half????
+	#model.half() #should I img.half????
 	# Box color.
 	bgr = (0, 255, 0)  # color of the box
 	# Get labels.
