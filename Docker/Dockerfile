@@ -42,8 +42,7 @@ RUN python3.8 -m pip install torch-*.whl
 RUN gdown https://drive.google.com/uc?id=1m0d8ruUY8RvCP9eVjZw4Nc8LAwM8yuGV
 RUN python3.8 -m pip install torchvision-*.whl
 RUN python3.8 -m pip install scikit-image==0.17.2
-RUN ls
-RUN git clone -b handmerge https://github.com/BrownVisualProsthesisProject/Visual_prosthesis
+RUN git clone -b prerecord https://github.com/BrownVisualProsthesisProject/Visual_prosthesis
 WORKDIR Visual_prosthesis
 RUN python3.8 -m pip install --upgrade pip
 RUN python3.8 -m pip install -r requirements_jetson.txt
@@ -61,8 +60,8 @@ RUN ./depthai/docker_dependencies.sh
 
 RUN ls
 RUN python3.8 ./depthai/install_requirements.py
-RUN git clone https://github.com/snakers4/silero-vad
-RUN ls && git pull
+
+WORKDIR /home
 
 #RUN apt-get update && \
 #	apt-get install cmake build-essential libopencv-dev python3-pyaudio -y && \
@@ -77,6 +76,5 @@ RUN ls && git pull
 #	rm /etc/apt/trusted.gpg.d/kitware.gpg && \
 #	apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 42D5A192B819C5DA && \
 #	apt update && apt install cmake -y
-
 
 
