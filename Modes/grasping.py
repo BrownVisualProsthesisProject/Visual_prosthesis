@@ -35,7 +35,7 @@ def send_json(locate_socket, x_locs, y_locs, x_shape, y_shape, detected_classes,
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
-	parser.add_argument("--model", default="yolov5s", type=str)
+	parser.add_argument("--model", default="yolov5m", type=str)
 	args = parser.parse_args()
 	context = zmq.Context()
 	locate_socket = context.socket(zmq.PUB)
@@ -134,7 +134,7 @@ if __name__ == "__main__":
 		latestPacket = {}
 		latestPacket["rgb"] = None
 		latestPacket["depth"] = None
-		HFOV = np.deg2rad(69.0)
+		HFOV = np.deg2rad(95.0)
 		#HFOV = np.deg2rad(90.0)
 		frame_count = 0
 		start_time = time.time()

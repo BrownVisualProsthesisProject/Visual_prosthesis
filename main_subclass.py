@@ -65,7 +65,7 @@ def choose_mode(currentKey):
         
     return current_stream,audio_stream
 
-python_version = "python3"
+python_version = "python3.8"
 # Program starts (main function)
 last_key = ""
 currentKey = ""
