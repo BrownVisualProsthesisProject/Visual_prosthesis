@@ -44,7 +44,7 @@ if __name__ == "__main__":
 	# Optional. If set (True), the ColorCamera is downscaled from 1080p to 720p.
 	# Otherwise (False), the aligned depth is automatically upscaled to 1080p
 	downscaleColor = True
-	fps = 15
+	fps = 11
 	# The disparity is computed at this resolution, then upscaled to RGB resolution
 	monoResolution = dai.MonoCameraProperties.SensorResolution.THE_400_P
 
