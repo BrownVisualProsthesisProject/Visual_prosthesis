@@ -5,6 +5,7 @@ MOUNTS="\
 --volume /etc/timezone:/etc/timezone:ro \
 --volume /etc/localtime:/etc/localtime:ro"
 
+sudo systemctl restart docker
 sudo xhost +si:localuser:root
 
 sudo docker run \
@@ -21,4 +22,4 @@ sudo docker run \
        -v /dev/bus/usb:/dev/bus/usb \
        --device-cgroup-rule='c 189:* rmw' \
        $MOUNTS \
-       vlab 
+       vlab python3.8 main_suclass.py

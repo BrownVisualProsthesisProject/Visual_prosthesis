@@ -116,9 +116,9 @@ def voice_control_mode():
 	# Load sound system.
 	system = Sound_System()
 
-	angles = [0,45,75,105,135,180]
-	times = ["two","one","twelve","eleven","ten"]
-	inverted_times = ["ten","eleven","twelve","one","two"]
+	angles = [0,10,25,40,55,70,85,95]
+	times = ["one-thirty","one-oclock","twelve-thirty","twelve-oclock","eleven-thirty","eleven-oclock","ten-thirty"]
+	inverted_times = ["ten-thirty","eleven-oclock","eleven-thirty","twelve-oclock","twelve-thirty","one-oclock", "one-thirty"]
 
 	energy = .5
 	pause = 0.5
@@ -187,9 +187,10 @@ def keyboard_control_mode():
 	# Load sound system.
 	system = Sound_System()
 
-	angles = [0,45,75,105,135,180]
-	times = ["two","one","twelve","eleven","ten"]
-	inverted_times = ["ten","eleven","twelve","one","two"]
+	angles = [0,10,25,40,55,70,85,95]
+	times = ["one-thirty","one-oclock","twelve-thirty","twelve-oclock","eleven-thirty","eleven-oclock","ten-thirty"]
+	inverted_times = ["ten-thirty","eleven-oclock","eleven-thirty","twelve-oclock","twelve-thirty","one-oclock", "one-thirty"]
+
 	time.sleep(4)
 
 	while True:
@@ -237,7 +238,7 @@ def grasp(system, grasping_memory, x_shape, y_shape):
 	movement = calculate_distance(obj_x, obj_y, x_shape, y_shape)
 	feet = depth_to_feet(depth)
 	if feet < 1.0:
-		sentence = f"{movement} at-less-than-1-feet"
+		sentence = f"{movement} at-less-than-1-foot"
 	else:
 		sentence = f"{movement} at{feet}-feet"
 
@@ -259,7 +260,7 @@ def localize(imagehub, system, angles, times, cls=None):
 		for i in range(len(detections)):
 			scaled_position = (1.0-detections[i][0])
 				
-			if angles[angle] <= scaled_position*180 <= angles[angle+1]:
+			if angles[angle] <= scaled_position*95 <= angles[angle+1]:
 				# here we count 
 				if cls and detections[i][1] != cls:
 					continue
@@ -296,7 +297,7 @@ def localization(imagehub, system, angles, times):
 				if detections[i][1] == 0: continue
 				scaled_position = detections[i][0]
 					
-				if angles[angle] <= scaled_position*180 <= angles[angle+1]:
+				if angles[angle] <= scaled_position*95 <= angles[angle+1]:
 					# here we count 
 					feet = depth_to_feet(detections[i][2])
 					if detections[i][1] in class_counts:

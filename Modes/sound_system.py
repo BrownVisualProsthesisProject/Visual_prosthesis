@@ -41,23 +41,23 @@ class Sound_System():
             if len(cont_classes)>1 and num_items == 0:
                 sentence+="and "
             if len(cont_classes[cls]) > 1:
-                sentence+="multiple " + make_plural(LABELS[cls])
+                sentence+="multiple-" + make_plural(LABELS[cls])
             else:
                 sentence+= LABELS[cls]
             sentence+=" "
 
         if len(cont_classes[cls]) > 1:
             if cont_classes[cls][0]<1.0:
-                sentence += f" at-{clock}-oclock the-closest at-less-than-1-feet"
+                sentence += f" at-{clock} the-closest at-less-than-1-feet"
             else:
-                sentence += f" at-{clock}-oclock the-closest at{min(cont_classes[cls])}-feet"
+                sentence += f" at-{clock} the-closest at{min(cont_classes[cls])}-feet"
             
         else:
             
             if cont_classes[cls][0]<1.0:
-                sentence += f" at-{clock}-oclock at-less-than-1-feet" 
+                sentence += f" at-{clock} at-less-than-1-feet" 
             else:
-                sentence += f" at-{clock}-oclock at{cont_classes[cls][0]}-feet" 
+                sentence += f" at-{clock} at{cont_classes[cls][0]}-feet" 
                 
             
 
@@ -73,12 +73,12 @@ class Sound_System():
             if len(cont_classes)>1 and num_items == 0:
                 sentence+="and "
             if cont_classes[cls] > 1:
-                sentence+="multiple " + make_plural(LABELS[cls])
+                sentence+="multiple-" + make_plural(LABELS[cls])
             else:
                 sentence+= LABELS[cls]  
             sentence+=" "
 
-        sentence += f" at-{clock}-oclock"             
+        sentence += f" at-{clock}"             
 
         self.play_words(sentence)
         return sentence
@@ -93,7 +93,7 @@ class Sound_System():
             if len(cont_classes)>1 and num_items == 0:
                 sentence+="and "
             if cont_classes[cls] > 1:
-                sentence+="multiple " + make_plural(LABELS[cls])
+                sentence+="multiple-" + make_plural(LABELS[cls])
             else:
                 sentence+= LABELS[cls] 
             sentence+=" "
@@ -103,6 +103,6 @@ class Sound_System():
         self.play_words(sentence)
         return sentence
     
-    def close_mixer():
+    def close_mixer(self):
         pygame.mixer.quit()
 

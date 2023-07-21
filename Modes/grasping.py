@@ -134,7 +134,7 @@ if __name__ == "__main__":
 		latestPacket = {}
 		latestPacket["rgb"] = None
 		latestPacket["depth"] = None
-		HFOV = np.deg2rad(95.0)
+		HFOV = np.deg2rad(60.0)
 		#HFOV = np.deg2rad(90.0)
 		frame_count = 0
 		start_time = time.time()
