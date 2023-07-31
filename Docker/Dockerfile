@@ -42,7 +42,8 @@ RUN python3.8 -m pip install torch-*.whl
 RUN gdown https://drive.google.com/uc?id=1m0d8ruUY8RvCP9eVjZw4Nc8LAwM8yuGV
 RUN python3.8 -m pip install torchvision-*.whl
 RUN python3.8 -m pip install scikit-image==0.17.2
-RUN git clone -b prerecord https://github.com/BrownVisualProsthesisProject/Visual_prosthesis
+RUN ls
+RUN git clone -b new_clock https://github.com/BrownVisualProsthesisProject/Visual_prosthesis
 WORKDIR Visual_prosthesis
 RUN python3.8 -m pip install --upgrade pip
 RUN python3.8 -m pip install -r requirements_jetson.txt
@@ -58,8 +59,10 @@ RUN cp ./Docker/asound.conf /etc
 RUN git clone https://github.com/luxonis/depthai
 RUN ./depthai/docker_dependencies.sh
 
-RUN ls
 RUN python3.8 ./depthai/install_requirements.py
+RUN python3.8 -m pip install Jetson.GPIO==2.0.16
+RUN cp ./Docker/99-gpio.rules /etc/udev/rules.d/ 
+
 
 WORKDIR /home
 
