@@ -4,8 +4,13 @@
 import time
 import subprocess
 
+import Jetson.GPIO as GPIO
+
 # Third party modules
 from pynput import keyboard
+GPIO.setmode(GPIO.BOARD)
+GPIO.setup(15, GPIO.OUT)
+GPIO.output(15, GPIO.LOW)
 
 def start_key_listener(currentKey):
     """Keyboard listener."""
@@ -104,6 +109,7 @@ while True:
 
         if currentKey == "q":
             close_streams(current_stream, audio_stream)
+            GPIO.cleanup()
             break
         last_key = currentKey
 

@@ -16,7 +16,7 @@ import torch
 from rapidfuzz import fuzz
 from Constants import LABELS, INITIAL_PROMPT
 from custom_recognizer import CustomRecognizer
-
+import Jetson.GPIO as GPIO
 
 stop_flag = False
 
@@ -134,7 +134,9 @@ def voice_control_mode():
 					 args=(audio_queue, result_queue, audio_model))
 	time.sleep(4)
 	transcribe_thread.start()
-
+	GPIO.setmode(GPIO.BOARD)
+	channel = 15
+	GPIO.setup(channel, GPIO.OUT)
 	while True:
 		speech = result_queue.get() 
 		closest_match = find_closest_match(speech)
@@ -151,6 +153,7 @@ def voice_control_mode():
 			transcribe_thread.join()
 			record_thread.join()
 			system.close_mixer()
+			GPIO.cleanup()
 			break
 
 		if closest_match:
@@ -159,8 +162,10 @@ def voice_control_mode():
 			print("=====",closest_match)
 			if closest_match == "list":
 				describe(imagehub, system, times)
+				power_gpio(channel)
 			elif closest_match == "find":
 				localization(imagehub, system, angles, inverted_times)
+				power_gpio(channel)
 			elif closest_match in obj["labels"]:
 				message = imagehub.recv_msg()
 				#obj = json.loads(message)
@@ -175,10 +180,19 @@ def voice_control_mode():
 						else:
 							localize(imagehub, system, angles, times, closest_match)
 						break
+				power_gpio(channel)
 			else:
 				system.say_sentence("Sorry-I-cant-locate-that")
+
+def power_gpio(channel):
+    GPIO.output(channel, GPIO.HIGH)
+    time.sleep(.1)
+    GPIO.output(channel, GPIO.LOW)
 		
 def keyboard_control_mode():
+	GPIO.setmode(GPIO.BOARD)
+	channel = 15
+	GPIO.setup(channel, GPIO.OUT)
 	hostname = 'tcp://127.0.0.1:5559'  # Use to receive from localhost
 	# hostname = "192.168.86.38"  # Use to receive from other computer
 	port = 5559
@@ -213,8 +227,10 @@ def keyboard_control_mode():
 			
 			if closest_match == "list":
 				describe(imagehub, system, times)
+				power_gpio(channel)
 			elif closest_match == "find":
 				localization(imagehub, system, angles, inverted_times)
+				power_gpio(channel)
 			elif closest_match in obj["labels"]:
 				message = imagehub.recv_msg()
 				#obj = json.loads(message)
@@ -229,6 +245,7 @@ def keyboard_control_mode():
 						else:
 							localize(imagehub, system, angles, times, closest_match)
 						break
+				power_gpio(channel)
 			else:
 				system.say_sentence("Sorry-I-cant-locate-that")
 
@@ -238,9 +255,9 @@ def grasp(system, grasping_memory, x_shape, y_shape):
 	movement = calculate_distance(obj_x, obj_y, x_shape, y_shape)
 	feet = depth_to_feet(depth)
 	if feet < 1.0:
-		sentence = f"{movement} at-less-than-1-foot"
+		sentence = f"{LABELS[label]} {movement} at-less-than-1-foot"
 	else:
-		sentence = f"{movement} at{feet}-feet"
+		sentence = f"{LABELS[label]} {movement} at{feet}-feet"
 
 	system.say_sentence(sentence)
 
@@ -277,6 +294,7 @@ def localize(imagehub, system, angles, times, cls=None):
 		if class_counts:
 			print(class_counts)
 			sentence = system.describe_pos_w_depth(class_counts, times[angle])
+			power_gpio(channel=15)
 				#system.play_sound("person_slow" + ".wav", rho, scaled_position, phi)
 			#here we say what we count.
 			#we need a new sound system that can generate the sentence from the dictionary
@@ -311,6 +329,7 @@ def localization(imagehub, system, angles, times):
 			if class_counts:
 				print(class_counts)
 				sentence = system.describe_pos_w_depth(class_counts, times[angle])
+				power_gpio(channel=15)
 				#system.play_sound("person_slow" + ".wav", rho, scaled_position, phi)
 				#here we say what we count.
 				#we need a new sound system that can generate the sentence from the dictionary
