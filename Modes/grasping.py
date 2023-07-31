@@ -35,7 +35,7 @@ def send_json(locate_socket, x_locs, y_locs, x_shape, y_shape, detected_classes,
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
-	parser.add_argument("--model", default="yolov5m", type=str)
+	parser.add_argument("--model", default="yolov5m6", type=str)
 	args = parser.parse_args()
 	context = zmq.Context()
 	locate_socket = context.socket(zmq.PUB)
