@@ -55,7 +55,9 @@ class Sound_System():
         else:
             
             if cont_classes[cls][0]<1.0:
-                sentence += f" at-{clock} at-less-than-1-feet" 
+                sentence += f" at-{clock} at-less-than-1-feet"
+            elif cont_classes[cls][0]>25.0:
+                sentence += f" at-{clock} at-over-25-feet" 
             else:
                 sentence += f" at-{clock} at{cont_classes[cls][0]}-feet" 
                 

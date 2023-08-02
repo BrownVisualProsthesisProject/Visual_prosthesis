@@ -22,7 +22,6 @@ sudo docker run \
        -v /dev/bus/usb:/dev/bus/usb \
        -v /sys:/sys \
        -e JETSON_MODEL_NAME=[JETSON_XAVIER] \
-       --group-add $(cut -d: -f3 < <(getent group gpio)) \
        --device-cgroup-rule='c 189:* rmw' \
        $MOUNTS \
        vlab
