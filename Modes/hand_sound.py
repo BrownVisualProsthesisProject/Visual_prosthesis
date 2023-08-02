@@ -178,7 +178,7 @@ def voice_control_mode():
 						if detections[i][2] < 1.2*1000:
 							grasp(system, detections[i], obj["x_shape"], obj["y_shape"])
 						else:
-							localize(imagehub, system, angles, inverted_times, closest_match)
+							localize(imagehub, system, angles, times, closest_match)
 						break
 				power_gpio(channel)
 			else:
@@ -186,7 +186,7 @@ def voice_control_mode():
 
 def power_gpio(channel):
     GPIO.output(channel, GPIO.HIGH)
-    time.sleep(.1)
+    time.sleep(.03)
     GPIO.output(channel, GPIO.LOW)
 		
 def keyboard_control_mode():
