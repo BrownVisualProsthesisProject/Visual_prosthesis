@@ -5,8 +5,6 @@ RUN ls ./
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
       git \
-      curl \ 
-      python3.8 python3.8-dev python3-pip \
       # dev
       libopenmpi-dev libomp-dev libopenblas-dev libblas-dev \
       libeigen3-dev python3-tk libssl-dev zlib1g-dev gcc g++ make nano \
@@ -28,19 +26,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       unzip \
       espeak \
       ffmpeg \
-################################################################
-##torch torchvision
-################################################################
-      libopenblas-base \
-      libopenmpi-dev \
-      libomp-dev \
-      libjpeg-dev \
-      zlib1g-dev \
-      libpython3-dev \
-      libopenblas-dev \
-      libavcodec-dev \
-      libavformat-dev \
-      libswscale-dev \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
@@ -49,9 +34,8 @@ RUN python3.8 -m pip install --upgrade pip
 RUN python3.8 -m pip install --upgrade setuptools gdown wheel
 
 # pytorch 1.11.0
-RUN wget https://nvidia.box.com/shared/static/sct3njlmea4whlf6ud9tj1853zi3vb1v.whl -O torch-2.0.0.nv23.05-cp38-cp38-linux_aarch64.whl
-
-RUN python3.8 -m pip install torch-2.0.0.nv23.05-cp38-cp38-linux_aarch64.whl
+RUN gdown https://drive.google.com/uc?id=1hs9HM0XJ2LPFghcn7ZMOs5qu5HexPXwM
+RUN python3.8 -m pip install torch-*.whl
 
 # torchvision 0.12.0
 RUN gdown https://drive.google.com/uc?id=1m0d8ruUY8RvCP9eVjZw4Nc8LAwM8yuGV
@@ -63,10 +47,8 @@ WORKDIR Visual_prosthesis
 RUN python3.8 -m pip install --upgrade pip
 RUN python3.8 -m pip install -r requirements_jetson.txt
 RUN python3.8 -m pip uninstall opencv-python-headless opencv-python opencv-contrib-python -y
-RUN python3.8 -m pip install opencv-python opencv-contrib-python pygame gtts ultralytics rapidfuzz onnxruntime setuptools_rust
+RUN python3.8 -m pip install opencv-python opencv-contrib-python pygame gtts ultralytics rapidfuzz onnxruntime
 RUN python3.8 -m  pip install protobuf==3.20.3 --upgrade
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-ENV PATH="/root/.cargo/bin:${PATH}"
 RUN git clone https://github.com/mallorbc/whisper_mic && cd whisper_mic && \
     python3.8 -m pip install -r requirements.txt && cd ..
 

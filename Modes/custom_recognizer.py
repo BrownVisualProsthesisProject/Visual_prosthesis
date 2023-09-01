@@ -17,12 +17,13 @@ class CustomRecognizer(sr.Recognizer):
 		# source.CHUNK = 1024 / source.SAMPLERATE
 		self.seconds_per_buffer = float(1024) / 16000
 		self.pause_buffer_count = int(math.ceil(self.pause_threshold / self.seconds_per_buffer))  # number of buffers of non-speaking audio during a phrase, before the phrase should be considered complete
-		self.phrase_buffer_count = int(math.ceil(self.phrase_threshold / self.seconds_per_buffer))-2  # minimum number of buffers of speaking audio before we consider the speaking audio a phrase
+		self.phrase_buffer_count = int(math.ceil(self.phrase_threshold / self.seconds_per_buffer))-3  # minimum number of buffers of speaking audio before we consider the speaking audio a phrase
 		self.non_speaking_buffer_count = int(math.ceil(self.non_speaking_duration / self.seconds_per_buffer))  # maximum number of buffers of non-speaking audio to retain before and after a phrase
 		self.mean_noise = 0
 		self.num_samples = 0
 		self.mean_sum = 0
 		self.rms_flag = True
+		print(self.phrase_buffer_count)
 
 	def listen(self, source, phrase_time_limit=2):
 		"""
@@ -65,8 +66,8 @@ class CustomRecognizer(sr.Recognizer):
 				# detect whether speaking has started on audio input
 				prob = self.model(tensor_buffer, 16000).item()
 				energy = audioop.rms(buffer, source.SAMPLE_WIDTH)
-				#print(source.SAMPLE_WIDTH)
-				if prob > self.energy_threshold and energy > 900: 
+				print(energy)
+				if prob > self.energy_threshold and energy > 700: 
 					break
 
 			# read audio input until the phrase ends

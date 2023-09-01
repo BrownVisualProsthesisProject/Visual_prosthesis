@@ -1,6 +1,7 @@
 """Main process."""
 
 # Standar modules
+import os
 import time
 import subprocess
 
@@ -65,7 +66,7 @@ def choose_mode(currentKey):
         
     return current_stream,audio_stream
 
-python_version = "python3.8"
+python_version = python_version = os.path.join("./env", 'bin', 'python') 
 # Program starts (main function)
 last_key = ""
 currentKey = ""

@@ -1,15 +1,11 @@
 # Main
 opencv-python == 4.6.0.66
 pynput == 1.7.6
-pyttsx3 == 2.90
+pygame == 2.5.1
 imagezmq == 1.1.1 
-python-openal
-easyocr
-mediapipe
-easyocr
+
 simplejpeg
 pydub
-tesserocr==2.5.2
 scikit-image==0.17.2
 imutils
 
