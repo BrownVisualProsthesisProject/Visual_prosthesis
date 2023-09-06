@@ -1,0 +1,25 @@
+const int dacPin = A0; // DAC pin on the UNO R4 Minima
+const int digitalInputPin = 2; // Digital input pin to check for the signal
+
+void setup() {
+  // Set the digital input pin as an input
+  pinMode(digitalInputPin, INPUT);
+
+  // Nothing specific needed in the setup for DAC output
+}
+
+void loop() {
+  // Check the state of the digital input pin
+  int digitalInputState = digitalRead(digitalInputPin);
+
+  if (digitalInputState == HIGH) {
+    // If D2 is HIGH, set the DAC to the maximum value (5V)
+    analogWrite(dacPin, 255);
+  } else {
+    // If D2 is LOW, turn off the DAC output (set to 0V)
+    analogWrite(dacPin, 0);
+  }
+
+  // Some optional delay, if needed
+  delay(100); // Adjust the delay value as needed
+}

@@ -16,7 +16,10 @@ import torch
 from rapidfuzz import fuzz
 from Constants import LABELS, INITIAL_PROMPT
 from custom_recognizer import CustomRecognizer
-import Jetson.GPIO as GPIO
+import platform
+
+if platform.machine() == "aarch64":
+	import Jetson.GPIO as GPIO
 
 stop_flag = False
 
@@ -134,9 +137,10 @@ def voice_control_mode():
 					 args=(audio_queue, result_queue, audio_model))
 	time.sleep(4)
 	transcribe_thread.start()
-	GPIO.setmode(GPIO.BOARD)
-	channel = 15
-	GPIO.setup(channel, GPIO.OUT)
+	if platform.machine() == "aarch64":
+		GPIO.setmode(GPIO.BOARD)
+		channel = 15
+		GPIO.setup(channel, GPIO.OUT)
 	while True:
 		speech = result_queue.get() 
 		closest_match = find_closest_match(speech)
@@ -153,7 +157,8 @@ def voice_control_mode():
 			transcribe_thread.join()
 			record_thread.join()
 			system.close_mixer()
-			GPIO.cleanup()
+			if platform.machine() == "aarch64":
+				GPIO.cleanup()
 			break
 
 		if closest_match:
@@ -185,14 +190,16 @@ def voice_control_mode():
 				system.say_sentence("Sorry-I-cant-locate-that")
 
 def power_gpio(channel):
-    GPIO.output(channel, GPIO.HIGH)
-    time.sleep(.03)
-    GPIO.output(channel, GPIO.LOW)
+	if platform.machine() == "aarch64":
+		GPIO.output(channel, GPIO.HIGH)
+		time.sleep(.03)
+		GPIO.output(channel, GPIO.LOW)
 		
 def keyboard_control_mode():
-	GPIO.setmode(GPIO.BOARD)
-	channel = 15
-	GPIO.setup(channel, GPIO.OUT)
+	if platform.machine() == "aarch64":
+		GPIO.setmode(GPIO.BOARD)
+		channel = 15
+		GPIO.setup(channel, GPIO.OUT)
 	hostname = 'tcp://127.0.0.1:5559'  # Use to receive from localhost
 	# hostname = "192.168.86.38"  # Use to receive from other computer
 	port = 5559
@@ -219,6 +226,8 @@ def keyboard_control_mode():
 			time.sleep(1.5)
 			system.say_sentence("finishing")
 			system.close_mixer()
+			if platform.machine() == "aarch64":
+				GPIO.cleanup()
 			break
 
 		if closest_match:
