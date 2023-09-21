@@ -43,7 +43,7 @@ if __name__ == "__main__":
 
 	# Optional. If set (True), the ColorCamera is downscaled from 1080p to 720p.
 	# Otherwise (False), the aligned depth is automatically upscaled to 1080p
-	downscaleColor = True
+	downscaleColor = False
 	fps = 11
 	# The disparity is computed at this resolution, then upscaled to RGB resolution
 	monoResolution = dai.MonoCameraProperties.SensorResolution.THE_400_P
@@ -126,11 +126,11 @@ if __name__ == "__main__":
 		frameRgb = None
 		depthFrame = None
 
-		device.setIrLaserDotProjectorBrightness(0) # in mA, 0..1200
-		device.setIrFloodLightBrightness(0) # in mA, 0..1500
+		#device.setIrLaserDotProjectorBrightness(0) # in mA, 0..1200
+		#device.setIrFloodLightBrightness(0) # in mA, 0..1500
 
-		#x_shape, y_shape = (1280,720)
-		x_shape, y_shape = (1248, 936) #with set outputsize
+		x_shape, y_shape = (1280,800)
+		#x_shape, y_shape = (1248, 936) #with set outputsize
 		latestPacket = {}
 		latestPacket["rgb"] = None
 		latestPacket["depth"] = None

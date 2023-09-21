@@ -4,13 +4,13 @@
 import time
 import subprocess
 
-import Jetson.GPIO as GPIO
+#import Jetson.GPIO as GPIO
 
 # Third party modules
 from pynput import keyboard
-GPIO.setmode(GPIO.BOARD)
-GPIO.setup(15, GPIO.OUT)
-GPIO.output(15, GPIO.LOW)
+#GPIO.setmode(GPIO.BOARD)
+#GPIO.setup(15, GPIO.OUT)
+#GPIO.output(15, GPIO.LOW)
 
 def start_key_listener(currentKey):
     """Keyboard listener."""
@@ -70,7 +70,7 @@ def choose_mode(currentKey):
         
     return current_stream,audio_stream
 
-python_version = "python3.8"
+python_version = "python3"
 # Program starts (main function)
 last_key = ""
 currentKey = ""
