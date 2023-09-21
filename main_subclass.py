@@ -3,14 +3,16 @@
 # Standar modules
 import time
 import subprocess
-
-import Jetson.GPIO as GPIO
+import platform
 
 # Third party modules
 from pynput import keyboard
-GPIO.setmode(GPIO.BOARD)
-GPIO.setup(15, GPIO.OUT)
-GPIO.output(15, GPIO.LOW)
+
+if platform.machine() == "aarch64":
+    import Jetson.GPIO as GPIO
+    GPIO.setmode(GPIO.BOARD)
+    GPIO.setup(15, GPIO.OUT)
+    GPIO.output(15, GPIO.LOW)
 
 def start_key_listener(currentKey):
     """Keyboard listener."""
@@ -70,7 +72,7 @@ def choose_mode(currentKey):
         
     return current_stream,audio_stream
 
-python_version = "python3.8"
+python_version = "python3"
 # Program starts (main function)
 last_key = ""
 currentKey = ""
@@ -109,7 +111,8 @@ while True:
 
         if currentKey == "q":
             close_streams(current_stream, audio_stream)
-            GPIO.cleanup()
+            if platform.machine() == "aarch64":
+                GPIO.cleanup()
             break
         last_key = currentKey
 

@@ -35,15 +35,15 @@ def send_json(locate_socket, x_locs, y_locs, x_shape, y_shape, detected_classes,
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
-	parser.add_argument("--model", default="yolov5m6", type=str)
+	parser.add_argument("--model", default="yolov5m_Objects365", type=str)
 	args = parser.parse_args()
 	context = zmq.Context()
 	locate_socket = context.socket(zmq.PUB)
-	locate_socket.bind("tcp://127.0.0.1:5559")
+	locate_socket.bind("tcp://127.0.0.1:5558")
 
 	# Optional. If set (True), the ColorCamera is downscaled from 1080p to 720p.
 	# Otherwise (False), the aligned depth is automatically upscaled to 1080p
-	downscaleColor = True
+	downscaleColor = False
 	fps = 11
 	# The disparity is computed at this resolution, then upscaled to RGB resolution
 	monoResolution = dai.MonoCameraProperties.SensorResolution.THE_400_P
@@ -69,7 +69,7 @@ if __name__ == "__main__":
 
 	#Properties
 	camRgb.setBoardSocket(dai.CameraBoardSocket.RGB)
-	camRgb.setResolution(dai.ColorCameraProperties.SensorResolution.THE_12_MP)
+	#camRgb.setResolution(dai.ColorCameraProperties.SensorResolution.THE_12_MP)
 	#camRgb.setAs(False)
 	camRgb.setFps(fps)
 	if downscaleColor: camRgb.setIspScale(4, 13)
@@ -91,7 +91,7 @@ if __name__ == "__main__":
 
 	stereo.setDefaultProfilePreset(dai.node.StereoDepth.PresetMode.HIGH_DENSITY)
 	# LR-check is required for depth alignment
-	#stereo.initialConfig.setMedianFilter(dai.MedianFilter.KERNEL_7x7)
+	stereo.initialConfig.setMedianFilter(dai.MedianFilter.KERNEL_7x7)
 	stereo.setLeftRightCheck(True)
 	stereo.setSubpixel(False)
 	stereo.setExtendedDisparity(True) #best 
@@ -126,11 +126,11 @@ if __name__ == "__main__":
 		frameRgb = None
 		depthFrame = None
 
-		device.setIrLaserDotProjectorBrightness(0) # in mA, 0..1200
-		device.setIrFloodLightBrightness(0) # in mA, 0..1500
+		#device.setIrLaserDotProjectorBrightness(0) # in mA, 0..1200
+		#device.setIrFloodLightBrightness(0) # in mA, 0..1500
 
-		#x_shape, y_shape = (1280,720)
-		x_shape, y_shape = (1248, 936) #with set outputsize
+		x_shape, y_shape = (1280,800)
+		#x_shape, y_shape = (1248, 936) #with set outputsize
 		latestPacket = {}
 		latestPacket["rgb"] = None
 		latestPacket["depth"] = None
@@ -140,7 +140,7 @@ if __name__ == "__main__":
 		start_time = time.time()
 
 		while True:
-
+			
 			# Perform object detection every odd frame
 			#if counter % 2 == 0:
 			queueEvents = device.getQueueEvents(("rgb", "depth"))
@@ -164,7 +164,8 @@ if __name__ == "__main__":
 				#depthFrameColor = cv2.applyColorMap(depthFrameColor, cv2.COLORMAP_JET)
 				#cv2.imshow("depth", depthFrameColor)
 
-			if frameRgb is not None and depthFrame is not None:
+			if frameRgb is not None and depthFrame is not None :
+				print(frameRgb.shape)
 				# Run object detection inference over frame.
 				with torch.no_grad(): 
 					results = model(frameRgb)
@@ -180,7 +181,7 @@ if __name__ == "__main__":
 				for i in range(len(labels)):
 					row = cord[i]
 					# If confidence score is less than 0.45 we avoid making a prediction.
-					if row[4] < 0.53:
+					if row[4] < 0.35:
 						continue
 
 					x1 = int(row[0] * x_shape) 

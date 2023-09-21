@@ -14,7 +14,7 @@ import queue
 import threading
 import torch
 from rapidfuzz import fuzz
-from Constants import LABELS, INITIAL_PROMPT
+from Constants import LABELS, INITIAL_PROMPT, CHANNEL
 from custom_recognizer import CustomRecognizer
 import platform
 
@@ -139,8 +139,7 @@ def voice_control_mode():
 	transcribe_thread.start()
 	if platform.machine() == "aarch64":
 		GPIO.setmode(GPIO.BOARD)
-		channel = 15
-		GPIO.setup(channel, GPIO.OUT)
+		GPIO.setup(CHANNEL, GPIO.OUT)
 	while True:
 		speech = result_queue.get() 
 		closest_match = find_closest_match(speech)
@@ -167,10 +166,10 @@ def voice_control_mode():
 			print("=====",closest_match)
 			if closest_match == "list":
 				describe(imagehub, system, times)
-				power_gpio(channel)
+				power_gpio()
 			elif closest_match == "find":
 				localization(imagehub, system, angles, inverted_times)
-				power_gpio(channel)
+				power_gpio()
 			elif closest_match in obj["labels"]:
 				message = imagehub.recv_msg()
 				#obj = json.loads(message)
@@ -185,15 +184,15 @@ def voice_control_mode():
 						else:
 							localize(imagehub, system, angles, times, closest_match)
 						break
-				power_gpio(channel)
+				power_gpio()
 			else:
 				system.say_sentence("Sorry-I-cant-locate-that")
 
-def power_gpio(channel):
+def power_gpio():
 	if platform.machine() == "aarch64":
-		GPIO.output(channel, GPIO.HIGH)
+		GPIO.output(CHANNEL, GPIO.HIGH)
 		time.sleep(.03)
-		GPIO.output(channel, GPIO.LOW)
+		GPIO.output(CHANNEL, GPIO.LOW)
 		
 def keyboard_control_mode():
 	if platform.machine() == "aarch64":
@@ -236,10 +235,10 @@ def keyboard_control_mode():
 			
 			if closest_match == "list":
 				describe(imagehub, system, times)
-				power_gpio(channel)
+				power_gpio()
 			elif closest_match == "find":
 				localization(imagehub, system, angles, inverted_times)
-				power_gpio(channel)
+				power_gpio()
 			elif closest_match in obj["labels"]:
 				message = imagehub.recv_msg()
 				#obj = json.loads(message)
@@ -254,7 +253,7 @@ def keyboard_control_mode():
 						else:
 							localize(imagehub, system, angles, times, closest_match)
 						break
-				power_gpio(channel)
+				power_gpio()
 			else:
 				system.say_sentence("Sorry-I-cant-locate-that")
 
@@ -303,7 +302,7 @@ def localize(imagehub, system, angles, times, cls=None):
 		if class_counts:
 			print(class_counts)
 			sentence = system.describe_pos_w_depth(class_counts, times[angle])
-			power_gpio(channel=15)
+			power_gpio()
 				#system.play_sound("person_slow" + ".wav", rho, scaled_position, phi)
 			#here we say what we count.
 			#we need a new sound system that can generate the sentence from the dictionary
@@ -338,7 +337,7 @@ def localization(imagehub, system, angles, times):
 			if class_counts:
 				print(class_counts)
 				sentence = system.describe_pos_w_depth(class_counts, times[angle])
-				power_gpio(channel=15)
+				power_gpio()
 				#system.play_sound("person_slow" + ".wav", rho, scaled_position, phi)
 				#here we say what we count.
 				#we need a new sound system that can generate the sentence from the dictionary
@@ -356,8 +355,7 @@ def describe(imagehub, system, times):
 		class_counts = {}
 			#could be faster y falta generar los audios
 		for i in range(len(detections)):
-
-
+			
 			if detections[i][1] == 0: continue
 
 			if detections[i][1] in class_counts:

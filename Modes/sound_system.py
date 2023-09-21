@@ -1,13 +1,6 @@
 import pygame
 import time
-from Constants import LABELS
-
-def make_plural(string):
-    if string.endswith(('s', 'x', 'z', 'ch', 'sh')):
-        return f'{string}es'
-    else:
-        return f'{string}s'
-
+from Constants import LABELS, PLURALS
 
 class Sound_System():
 
@@ -41,7 +34,7 @@ class Sound_System():
             if len(cont_classes)>1 and num_items == 0:
                 sentence+="and "
             if len(cont_classes[cls]) > 1:
-                sentence+="multiple-" + make_plural(LABELS[cls])
+                sentence+="multiple-" + PLURALS[cls]
             else:
                 sentence+= LABELS[cls]
             sentence+=" "
@@ -75,7 +68,7 @@ class Sound_System():
             if len(cont_classes)>1 and num_items == 0:
                 sentence+="and "
             if cont_classes[cls] > 1:
-                sentence+="multiple-" + make_plural(LABELS[cls])
+                sentence+="multiple-" + PLURALS[cls]
             else:
                 sentence+= LABELS[cls]  
             sentence+=" "
@@ -95,7 +88,7 @@ class Sound_System():
             if len(cont_classes)>1 and num_items == 0:
                 sentence+="and "
             if cont_classes[cls] > 1:
-                sentence+="multiple-" + make_plural(LABELS[cls])
+                sentence+="multiple-" + PLURALS[cls]
             else:
                 sentence+= LABELS[cls] 
             sentence+=" "
