@@ -106,7 +106,7 @@ if __name__ == "__main__":
 
 	# Load Yolov5 model.
 	model = torch.hub.load('./yolov5', 'custom', path=f'./weights/{args.model}.pt', source='local') 
-	model.half() #should I img.half????
+	#model.half() #should I img.half????
 	# Box color.
 	bgr = (0, 255, 0)  # color of the box
 	# Get labels.
@@ -202,7 +202,7 @@ if __name__ == "__main__":
 					# Plot the boxes and text.
 					cv2.rectangle(frameRgb, (x1, y1), (x2, y2), bgr, 2)
 					cv2.putText(frameRgb, classes[int(labels[i])], (x1, y1), label_font, 2, bgr, 2)
-					cv2.putText(frameRgb, "{:.1f} m".format(distance/1000), (x1 + 10, y1 + 20), label_font, 0.7, (0,100,255))
+					cv2.putText(frameRgb, "{:.1f} m".format(distance/1000), (x1 + 10, y1 + 20), label_font, 0.7, (0,0,255))
 	
 					x_locs[i] = x / x_shape
 					y_locs[i] = y / y_shape

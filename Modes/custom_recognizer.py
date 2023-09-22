@@ -13,7 +13,7 @@ class CustomRecognizer(sr.Recognizer):
 												model='silero_vad',
 												force_reload=True,
 												source='local',
-												onnx=True)
+												onnx=False)
 		# source.CHUNK = 1024 / source.SAMPLERATE
 		self.seconds_per_buffer = float(1024) / 16000
 		self.pause_buffer_count = int(math.ceil(self.pause_threshold / self.seconds_per_buffer))  # number of buffers of non-speaking audio during a phrase, before the phrase should be considered complete
