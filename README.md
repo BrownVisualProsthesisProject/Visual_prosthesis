@@ -162,3 +162,10 @@ rm -r whisper_mic
 ```bash
 git submodule init --recursive
 ```
+
+### Audio 
++ Mac has NSSpeechSynthesizer
++ For other OS
+```bash
+pip install pyttsx3
+```hi9hi
