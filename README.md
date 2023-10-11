@@ -130,3 +130,35 @@ def choose_mode(currentKey, audios):
 [x] The main goal at this phase is to develop a reliable Manager that can switch (start and kill) between Processes (modes) while developing each module in parallel (pytesseract, Yolov5, localization...).
 
 [ ] The current objective is to have an object detector for a small subset of everyday items (cellphones and keys) while enhancing each module and managing technical debt (improving code quality and speed, refactoring, and documentation) in parallel.
+
+### For Mac
++ if Conda is used, deactivate Conda 
+```bash
+conda deactivate
+```
++ Get pip 
+```bash
+python3 get-pip.py
+```
++ install virtualenv
+```bash
+pip install virtualenv
+```
++ cd into Visual_prosthesis
+```bash
+virtualenv env
+```
+```bash
+source env/bin/activate
+```
++ Install Whisper
+```bash
+git clone https://github. com/mallorbc/whisper_mic && cd whisper_mic
+```
+```bash
+rm -r whisper_mic
+```
++ Install yolov5
+```bash
+git submodule init --recursive
+```
