@@ -1,13 +1,13 @@
-#import pygame
-import time
-import platform
-from Constants import LABELS
+import torch
+import numpy as np
+import soundfile as sf
+from pydub import AudioSegment
+from pydub.playback import play
+import tempfile
 
-# Conditional imports based on the OS
-if platform.system() == "Darwin":
-    from AppKit import NSSpeechSynthesizer
-else:
-    import pyttsx3
+# import pygame
+# import time
+from Constants import LABELS
 
 def make_plural(string):
     if string.endswith(('s', 'x', 'z', 'ch', 'sh')):
@@ -16,33 +16,31 @@ def make_plural(string):
         return f'{string}s'
 
 class Sound_System():
-
-    voice_choice = 108  # voice to desired index
-
-    def __init__(self):
-        if platform.system() == "Darwin":
-            self.synthesizer = NSSpeechSynthesizer.alloc().init()
-            self.synthesizer.setRate_(150.0)
-            
-            # Set the voice based on voice_choice
-            voices = NSSpeechSynthesizer.availableVoices()
-            self.synthesizer.setVoice_(voices[self.voice_choice])
-            
-        else:
-            self.engine = pyttsx3.init()
-            rate = self.engine.getProperty('rate')
-            self.engine.setProperty('rate', rate)
-
-    def say_sentence(self, sentence): 
-        self.play_words(sentence)
     
+    def __init__(self):
+        # Load Silero TTS model
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.model, self.utils = torch.hub.load(repo_or_dir='snakers4/silero-models',
+                                                model='silero_tts',
+                                                language='en',  # choose the language
+                                                speaker='lj')  # choose the speaker
+        (self.text_to_speech, _, _) = self.utils
+
+    def say_sentence(self, sentence):
+        self.play_words(sentence)
+
     def play_words(self, sentence):
-        if platform.system() == "Darwin":
-            self.synthesizer.startSpeakingString_(sentence)
-            time.sleep(len(sentence) * 0.1)
-        else:
-            self.engine.say(sentence)
-            self.engine.runAndWait()
+        # Synthesize speech
+        audio = self.text_to_speech(texts=[sentence],
+                                    model=self.model,
+                                    sample_rate=16000,
+                                    symbols_embedding_dim=768)[0]
+
+        # Save and play the audio
+        with tempfile.NamedTemporaryFile(delete=True) as temp_wav:
+            sf.write(temp_wav.name, audio.numpy(), 16000, format="WAV")
+            sound = AudioSegment.from_wav(temp_wav.name)
+            play(sound)
 
     def describe_pos_w_depth(self, cont_classes, clock):
         sentence = ""
@@ -108,9 +106,11 @@ class Sound_System():
 
         self.play_words(sentence)
         return sentence
-    
+
     def close_mixer(self):
-        if platform.system() != "Darwin":
-            self.engine.stop()
-        else:
-            self.engine.stop()
+        # Implement the required mixer close functionality if necessary
+        pass
+
+# Example usage
+# sound_system = Sound_System()
+# sound_system.say_sentence("Hello, this is a test sentence using Silero TTS.")

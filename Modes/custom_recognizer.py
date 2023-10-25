@@ -1,4 +1,3 @@
-
 import torch
 import speech_recognition as sr
 import math
