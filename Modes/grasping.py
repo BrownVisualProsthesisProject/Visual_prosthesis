@@ -41,18 +41,28 @@ if __name__ == "__main__":
     locate_socket = context.socket(zmq.PUB)
     locate_socket.bind("tcp://127.0.0.1:5559")
 
+<<<<<<< HEAD
     # Optional. If set (True), the ColorCamera is downscaled from 1080p to 720p.
     # Otherwise (False), the aligned depth is automatically upscaled to 1080p
     downscaleColor = True
     fps = 11
     # The disparity is computed at this resolution, then upscaled to RGB resolution
     monoResolution = dai.MonoCameraProperties.SensorResolution.THE_400_P
+=======
+	# Optional. If set (True), the ColorCamera is downscaled from 1080p to 720p.
+	# Otherwise (False), the aligned depth is automatically upscaled to 1080p
+	downscaleColor = True
+	fps = 11
+	# The disparity is computed at this resolution, then upscaled to RGB resolution
+	monoResolution = dai.MonoCameraProperties.SensorResolution.THE_400_P
+>>>>>>> 9c27e320f91f0b4116cb5f87a7529a994d406f19
 
     # Create pipeline
     pipeline = dai.Pipeline()
     device = dai.Device()
     queueNames = []
 
+<<<<<<< HEAD
     # Define sources and outputs
     camRgb = pipeline.create(dai.node.ColorCamera)
     #left = pipeline.create(dai.node.MonoCamera)
@@ -103,6 +113,58 @@ if __name__ == "__main__":
     #left.out.link(stereo.left)
     #right.out.link(stereo.right)
     #stereo.depth.link(depthOut.input)
+=======
+	# Define sources and outputs
+	camRgb = pipeline.create(dai.node.ColorCamera)
+	#left = pipeline.create(dai.node.MonoCamera)
+	#right = pipeline.create(dai.node.MonoCamera)
+	#stereo = pipeline.create(dai.node.StereoDepth)
+
+	rgbOut = pipeline.create(dai.node.XLinkOut)
+	#depthOut = pipeline.create(dai.node.XLinkOut)
+
+	rgbOut.setStreamName("rgb")
+	queueNames.append("rgb")
+	#depthOut.setStreamName("depth")
+	queueNames.append("depth")
+
+	#Properties
+	camRgb.setBoardSocket(dai.CameraBoardSocket.RGB)
+	camRgb.setResolution(dai.ColorCameraProperties.SensorResolution.THE_12_MP)
+	#camRgb.setAs(False)
+	camRgb.setFps(fps)
+	if downscaleColor: camRgb.setIspScale(4, 13)
+	# For now, RGB needs fixed focus to properly align with depth.
+	# This value was used during calibration
+	try:
+		calibData = device.readCalibration2()
+		lensPosition = calibData.getLensPosition(dai.CameraBoardSocket.RGB)
+		if lensPosition:
+			camRgb.initialControl.setManualFocus(lensPosition)
+	except:
+		raise
+	#left.setResolution(monoResolution)
+	#left.setBoardSocket(dai.CameraBoardSocket.LEFT)
+	#left.setFps(fps)
+	#right.setResolution(monoResolution)
+	#right.setBoardSocket(dai.CameraBoardSocket.RIGHT)
+	#right.setFps(fps)
+
+	#stereo.setDefaultProfilePreset(dai.node.StereoDepth.PresetMode.HIGH_DENSITY)
+	# LR-check is required for depth alignment
+	#stereo.initialConfig.setMedianFilter(dai.MedianFilter.KERNEL_7x7)
+	#stereo.setLeftRightCheck(True)
+	#stereo.setSubpixel(False)
+	#stereo.setExtendedDisparity(True) #best 
+	#stereo.setOutputSize(812, 608)
+	#stereo.setDepthAlign(dai.CameraBoardSocket.RGB)
+
+	# Linking
+	camRgb.isp.link(rgbOut.input)
+	#left.out.link(stereo.left)
+	#right.out.link(stereo.right)
+	#stereo.depth.link(depthOut.input)
+>>>>>>> 9c27e320f91f0b4116cb5f87a7529a994d406f19
 
     # Load Yolov5 model.
     model = torch.hub.load('./yolov5', 'custom', path=f'./weights/{args.model}.pt', source='local') 
@@ -129,6 +191,7 @@ if __name__ == "__main__":
         #device.setIrLaserDotProjectorBrightness(0) # in mA, 0..1200
         #device.setIrFloodLightBrightness(0) # in mA, 0..1500
 
+<<<<<<< HEAD
         #x_shape, y_shape = (1280,800)
         x_shape, y_shape = (1248, 936) #with set outputsize
         latestPacket = {}
@@ -138,9 +201,21 @@ if __name__ == "__main__":
         #HFOV = np.deg2rad(90.0)
         frame_count = 0
         start_time = time.time()
+=======
+		#x_shape, y_shape = (1280,800)
+		x_shape, y_shape = (1248, 936) #with set outputsize
+		latestPacket = {}
+		latestPacket["rgb"] = None
+		latestPacket["depth"] = None
+		HFOV = np.deg2rad(60.0)
+		#HFOV = np.deg2rad(90.0)
+		frame_count = 0
+		start_time = time.time()
+>>>>>>> 9c27e320f91f0b4116cb5f87a7529a994d406f19
 
         while True:
 
+<<<<<<< HEAD
             # Perform object detection every odd frame
             #if counter % 2 == 0:
             #queueEvents = device.getQueueEvents(("rgb", "depth"))
@@ -172,6 +247,39 @@ if __name__ == "__main__":
                 # Get labels and bounding boxes coordinates.
                 labels = results.xyxyn[0][:, -1].cpu().numpy()
                 cord = results.xyxyn[0][:, :-1].cpu().numpy()
+=======
+			# Perform object detection every odd frame
+			#if counter % 2 == 0:
+			#queueEvents = device.getQueueEvents(("rgb", "depth"))
+			queueEvents = device.getQueueEvents(("rgb"))
+			for queueName in queueEvents:
+				packets = device.getOutputQueue(queueName).tryGetAll()
+				if len(packets) > 0:
+					latestPacket[queueName] = packets[-1]
+				
+			if latestPacket["rgb"]:
+				frameRgb = latestPacket["rgb"].getCvFrame()
+				#frameRgb = cv2.resize(frameRgb, (812, 608))
+				#cv2.imshow(rgbWindowName, frameRgb)
+
+			#if latestPacket["depth"]:
+			#	depthFrame = latestPacket["depth"].getFrame()
+			#	depthAux = depthFrame[depthFrame != 0]
+			#	if not depthAux.any(): continue
+				#min_depth = np.percentile(depthAux, 1)
+				#max_depth = np.percentile(depthFrame, 99)
+				#depthFrameColor = np.interp(depthFrame, (min_depth, max_depth), (0, 255)).astype(np.uint8)
+				#depthFrameColor = cv2.applyColorMap(depthFrameColor, cv2.COLORMAP_JET)
+				#cv2.imshow("depth", depthFrameColor)
+
+			if frameRgb is not None :
+				# Run object detection inference over frame.
+				with torch.no_grad(): 
+					results = model(frameRgb)
+				# Get labels and bounding boxes coordinates.
+				labels = results.xyxyn[0][:, -1].cpu().numpy()
+				cord = results.xyxyn[0][:, :-1].cpu().numpy()
+>>>>>>> 9c27e320f91f0b4116cb5f87a7529a994d406f19
 
                 x_locs = [0]*len(labels)
                 y_locs = [0]*len(labels)
@@ -192,6 +300,7 @@ if __name__ == "__main__":
                     x = x1 + (x2 - x1) // 2
                     y = y1 + (y2 - y1) // 2
 
+<<<<<<< HEAD
                     #z = np.median(depthFrame[y1:y2,x1:x2])
                     x_dist = x - x_shape / 2
                     y_dist = y - y_shape / 2
@@ -206,6 +315,38 @@ if __name__ == "__main__":
                     cv2.rectangle(frameRgb, (x1, y1), (x2, y2), bgr, 2)
                     cv2.putText(frameRgb, classes[int(labels[i])], (x1, y1), label_font, 2, bgr, 2)
                     cv2.putText(frameRgb, "{:.1f} m".format(distance/1000), (x1 + 10, y1 + 20), label_font, 0.7, (0,0,255))
+=======
+					#z = np.median(depthFrame[y1:y2,x1:x2])
+					x_dist = x - x_shape / 2
+					y_dist = y - y_shape / 2
+
+					#x_dist = z*math.tan(calc_angle(depthFrame, x_dist, HFOV))
+					#y_dist = z*math.tan(calc_angle(depthFrame, y_dist, HFOV))
+
+					#distance = math.sqrt(x_dist ** 2 + y_dist ** 2 + z ** 2)
+					#distance = math.sqrt(x ** 2 + y ** 2 + z ** 2)
+					distance = 10000
+					# Plot the boxes and text.
+					cv2.rectangle(frameRgb, (x1, y1), (x2, y2), bgr, 2)
+					cv2.putText(frameRgb, classes[int(labels[i])], (x1, y1), label_font, 2, bgr, 2)
+					cv2.putText(frameRgb, "{:.1f} m".format(distance/1000), (x1 + 10, y1 + 20), label_font, 0.7, (0,0,255))
+	
+					x_locs[i] = x / x_shape
+					y_locs[i] = y / y_shape
+					detected_classes[i] = classes[int(labels[i])]
+					object_depth[i] = distance
+				
+				send_json(locate_socket, x_locs, y_locs, x_shape, y_shape, detected_classes, object_depth)
+				#blended_frame = cv2.addWeighted(frameRgb, .7, depthFrameColor, .3 , 0)
+				# Increment frame count
+				frame_count += 1
+				
+				# Calculate FPS
+				end_time = time.time()
+				elapsed_time = end_time - start_time
+				fps = frame_count / elapsed_time
+				cv2.putText(frameRgb, "FPS: {:.2f}".format(fps), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+>>>>>>> 9c27e320f91f0b4116cb5f87a7529a994d406f19
     
                     x_locs[i] = x / x_shape
                     y_locs[i] = y / y_shape
