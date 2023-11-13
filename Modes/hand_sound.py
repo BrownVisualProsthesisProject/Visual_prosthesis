@@ -21,18 +21,34 @@ from custom_recognizer import CustomRecognizer
 stop_flag = False
 
 
-def find_closest_match(word):
-	max_score = -1
-	closest_match = None
-	word_cleaned = word.translate(str.maketrans('', '', string.punctuation)).lower()
-	print(word_cleaned)
-	for key in LABELS:
-		score = fuzz.ratio(word_cleaned, key)
-		if score > .6 and score > max_score :
-			max_score = score
-			closest_match = key
+# def find_closest_match(word):
+# 	max_score = -1
+# 	closest_match = None
+# 	word_cleaned = word.translate(str.maketrans('', '', string.punctuation)).lower()
+# 	print(word_cleaned)
+# 	for key in LABELS:
+# 		score = fuzz.ratio(word_cleaned, key)
+# 		if score > .6 and score > max_score :
+# 			max_score = score
+# 			closest_match = key
 
-	return closest_match
+# 	return closest_match
+
+def find_closest_match(word):
+    max_score = -1
+    closest_match = None
+    word_cleaned = word.translate(str.maketrans('', '', string.punctuation)).lower()
+    
+    # List of potential commands
+    potential_commands = ["list", "find", "close"] + list(LABELS.keys())
+    
+    for key in potential_commands:
+        score = fuzz.ratio(word_cleaned, key)
+        if score > 80 and score > max_score:  # Increase this threshold for stricter matching
+            max_score = score
+            closest_match = key
+
+    return closest_match
 	
 def depth_to_feet(mm):
 	feet = mm / 304.8
@@ -107,158 +123,82 @@ def transcribe_forever(audio_queue, result_queue, audio_model):
 		result_queue.put_nowait(result["text"])
 
 
-# def voice_control_mode():
-# 	hostname = 'tcp://127.0.0.1:5559'  # Use to receive from localhost
-# 	# hostname = "192.168.86.38"  # Use to receive from other computer
-# 	port = 5559
-
-# 	imagehub = MessageStreamSubscriberEvent(hostname, port)
-# 	# Load sound system.
-# 	system = Sound_System()
-
-# 	angles = [0,10,25,40,55,70,85,95]
-# 	times = ["one-thirty","one-oclock","twelve-thirty","twelve-oclock","eleven-thirty","eleven-oclock","ten-thirty"]
-# 	inverted_times = ["ten-thirty","eleven-oclock","eleven-thirty","twelve-oclock","twelve-thirty","one-oclock", "one-thirty"]
-
-# 	energy = .5
-# 	pause = 0.5
-# 	dynamic_energy = False
-
-# 	audio_model = whisper.load_model("tiny.en", download_root="./weights")
-# 	audio_queue = queue.Queue()
-# 	result_queue = queue.Queue()
-# 	record_thread = threading.Thread(target=record_audio,
-# 					 args=(audio_queue, energy, pause, dynamic_energy))
-# 	record_thread.start()
-# 	transcribe_thread = threading.Thread(target=transcribe_forever,
-# 					 args=(audio_queue, result_queue, audio_model))
-# 	time.sleep(4)
-# 	transcribe_thread.start()
-# 	#GPIO.setmode(GPIO.BOARD)
-# 	channel = 15
-# 	#GPIO.setup(channel, GPIO.OUT)
-# 	while True:
-# 		speech = result_queue.get() 
-# 		closest_match = find_closest_match(speech)
-# 		if not closest_match: 
-# 			continue
-# 		if len(closest_match)>14:
-# 			continue
-
-# 		if closest_match == "close":
-# 			system.say_sentence("finishing")
-# 			time.sleep(1.5)
-# 			global stop_flag
-# 			stop_flag = True
-# 			transcribe_thread.join()
-# 			record_thread.join()
-# 			system.close_mixer()
-# 			#GPIO.cleanup()
-# 			break
-
-# 		if closest_match:
-# 			message = imagehub.recv_msg()
-# 			obj = json.loads(message)
-# 			print("=====",closest_match)
-# 			if closest_match == "list":
-# 				describe(imagehub, system, times)
-# 				#power_gpio(channel)
-# 			elif closest_match == "find":
-# 				localization(imagehub, system, angles, inverted_times)
-# 				#power_gpio(channel)
-# 			elif closest_match in obj["labels"]:
-# 				message = imagehub.recv_msg()
-# 				#obj = json.loads(message)
-# 				detections = zip(obj["x_locs"],obj["labels"], obj["depth"],obj["y_locs"])
-# 				detections = sorted(detections, key=lambda tup: tup[2])
-				
-# 				for i in range(len(detections)):
-# 					if detections[i][1] == closest_match:
-# 						print("====",detections[i][2])
-# 						if detections[i][2] < 1.2*1000:
-# 							grasp(system, detections[i], obj["x_shape"], obj["y_shape"])
-# 						else:
-# 							localize(imagehub, system, angles, times, closest_match)
-# 						break
-# 				#power_gpio(channel)
-# 			else:
-# 				system.say_sentence("Sorry-I-cant-locate-that")
-
 def voice_control_mode():
-    hostname = 'tcp://127.0.0.1:5559'
-    port = 5559
+	hostname = 'tcp://127.0.0.1:5559'  # Use to receive from localhost
+	# hostname = "192.168.86.38"  # Use to receive from other computer
+	port = 5559
 
-    imagehub = MessageStreamSubscriberEvent(hostname, port)
-    system = Sound_System()
+	imagehub = MessageStreamSubscriberEvent(hostname, port)
+	# Load sound system.
+	system = Sound_System()
 
-    angles = [0, 10, 25, 40, 55, 70, 85, 95]
-    times = ["one-thirty", "one-oclock", "twelve-thirty", "twelve-oclock", "eleven-thirty", "eleven-oclock", "ten-thirty"]
-    inverted_times = ["ten-thirty", "eleven-oclock", "eleven-thirty", "twelve-oclock", "twelve-thirty", "one-oclock", "one-thirty"]
+	angles = [0,10,25,40,55,70,85,95]
+	times = ["one-thirty","one-oclock","twelve-thirty","twelve-oclock","eleven-thirty","eleven-oclock","ten-thirty"]
+	inverted_times = ["ten-thirty","eleven-oclock","eleven-thirty","twelve-oclock","twelve-thirty","one-oclock", "one-thirty"]
 
-    energy = .5
-    pause = 0.5
-    dynamic_energy = False
+	energy = .5
+	pause = 0.5
+	dynamic_energy = False
 
-    audio_model = whisper.load_model("tiny.en", download_root="./weights")
-    audio_queue = queue.Queue()
-    result_queue = queue.Queue()
+	audio_model = whisper.load_model("tiny.en", download_root="./weights")
+	audio_queue = queue.Queue()
+	result_queue = queue.Queue()
+	record_thread = threading.Thread(target=record_audio,
+					 args=(audio_queue, energy, pause, dynamic_energy))
+	record_thread.start()
+	transcribe_thread = threading.Thread(target=transcribe_forever,
+					 args=(audio_queue, result_queue, audio_model))
+	time.sleep(4)
+	transcribe_thread.start()
+	#GPIO.setmode(GPIO.BOARD)
+	channel = 15
+	#GPIO.setup(channel, GPIO.OUT)
+	while True:
+		speech = result_queue.get() 
+		closest_match = find_closest_match(speech)
+		if not closest_match: 
+			continue
+		if len(closest_match)>14:
+			continue
 
-    record_thread = threading.Thread(target=record_audio, args=(audio_queue, energy, pause, dynamic_energy))
-    record_thread.start()
+		if closest_match == "close":
+			system.say_sentence("finishing")
+			time.sleep(1.5)
+			global stop_flag
+			stop_flag = True
+			transcribe_thread.join()
+			record_thread.join()
+			system.close_mixer()
+			#GPIO.cleanup()
+			break
 
-    transcribe_thread = threading.Thread(target=transcribe_forever, args=(audio_queue, result_queue, audio_model))
-    time.sleep(4)
-    transcribe_thread.start()
-
-    while True:
-        speech = result_queue.get()
-        closest_match = find_closest_match(speech)
-
-        # Debugging print
-        print("Closest Match:", closest_match)
-
-        if not closest_match or len(closest_match) > 14:
-            system.say_sentence("Sorry-thats-not-a-valid-label")
-            continue
-
-        message = imagehub.recv_msg()
-        obj = json.loads(message)
-
-        if closest_match in ["list", "find", "close"]:
-            print("=====", closest_match)
-            if closest_match == "list":
-                describe(imagehub, system, times)
-            elif closest_match == "find":
-                localization(imagehub, system, angles, inverted_times)
-            elif closest_match == "close":
-                system.say_sentence("finishing")
-                time.sleep(1.5)
-                global stop_flag
-                stop_flag = True
-                transcribe_thread.join()
-                record_thread.join()
-                system.close_mixer()
-                break
-
-        elif closest_match in LABELS:
-            detections = zip(obj["x_locs"], obj["labels"], obj["depth"], obj["y_locs"])
-            detections = sorted(detections, key=lambda tup: tup[2])
-            label_found_in_scene = False
-            for i in range(len(detections)):
-                if detections[i][1] == closest_match:
-                    label_found_in_scene = True
-                    print("====", detections[i][2])
-                    if detections[i][2] < 1.2*1000:
-                        grasp(system, detections[i], obj["x_shape"], obj["y_shape"])
-                    else:
-                        localize(imagehub, system, angles, times, closest_match)
-                    break
-            if not label_found_in_scene:
-                system.say_sentence("Sorry-I-cant-locate-that")
-
-        else:
-            system.say_sentence("Sorry-thats-not-a-valid-label")
-
+		if closest_match:
+			message = imagehub.recv_msg()
+			obj = json.loads(message)
+			print("=====",closest_match)
+			if closest_match == "list":
+				describe(imagehub, system, times)
+				#power_gpio(channel)
+			elif closest_match == "find":
+				localization(imagehub, system, angles, inverted_times)
+				#power_gpio(channel)
+			elif closest_match in obj["labels"]:
+				message = imagehub.recv_msg()
+				#obj = json.loads(message)
+				detections = zip(obj["x_locs"],obj["labels"], obj["depth"],obj["y_locs"])
+				detections = sorted(detections, key=lambda tup: tup[2])
+				
+				for i in range(len(detections)):
+					if detections[i][1] == closest_match:
+						print("====",detections[i][2])
+						if detections[i][2] < 1.2*1000:
+							grasp(system, detections[i], obj["x_shape"], obj["y_shape"])
+						else:
+							localize(imagehub, system, angles, times, closest_match)
+						break
+				#power_gpio(channel)
+			else:
+				system.say_sentence("Sorry-I-cant-locate-that")
 
 def power_gpio(channel):
     GPIO.output(channel, GPIO.HIGH)
