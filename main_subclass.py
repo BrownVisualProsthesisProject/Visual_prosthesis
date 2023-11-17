@@ -109,7 +109,7 @@ while True:
 
         if currentKey == "q":
             close_streams(current_stream, audio_stream)
-            GPIO.cleanup()
+            # GPIO.cleanup()
             break
         last_key = currentKey
 

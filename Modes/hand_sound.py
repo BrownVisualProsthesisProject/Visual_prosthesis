@@ -21,34 +21,18 @@ from custom_recognizer import CustomRecognizer
 stop_flag = False
 
 
-# def find_closest_match(word):
-# 	max_score = -1
-# 	closest_match = None
-# 	word_cleaned = word.translate(str.maketrans('', '', string.punctuation)).lower()
-# 	print(word_cleaned)
-# 	for key in LABELS:
-# 		score = fuzz.ratio(word_cleaned, key)
-# 		if score > .6 and score > max_score :
-# 			max_score = score
-# 			closest_match = key
-
-# 	return closest_match
-
 def find_closest_match(word):
-    max_score = -1
-    closest_match = None
-    word_cleaned = word.translate(str.maketrans('', '', string.punctuation)).lower()
-    
-    # List of potential commands
-    potential_commands = ["list", "find", "close"] + list(LABELS.keys())
-    
-    for key in potential_commands:
-        score = fuzz.ratio(word_cleaned, key)
-        if score > 80 and score > max_score:  # Increase this threshold for stricter matching
-            max_score = score
-            closest_match = key
+	max_score = -1
+	closest_match = None
+	word_cleaned = word.translate(str.maketrans('', '', string.punctuation)).lower()
+	print(word_cleaned)
+	for key in LABELS:
+		score = fuzz.ratio(word_cleaned, key)
+		if score > .6 and score > max_score :
+			max_score = score
+			closest_match = key
 
-    return closest_match
+	return closest_match
 	
 def depth_to_feet(mm):
 	feet = mm / 304.8
