@@ -1,5 +1,8 @@
-import pygame
-import time
+import torch
+from TTS.api import TTS
+import numpy as np
+import sounddevice as sd
+
 from Constants import LABELS
 
 def make_plural(string):
@@ -8,29 +11,31 @@ def make_plural(string):
     else:
         return f'{string}s'
 
-
 class Sound_System():
-
     def __init__(self):
-        pygame.init()
+        # Force Coqui TTS to use CPU
+        device = "cpu"
+        model_name = "tts_models/en/ljspeech/tacotron2-DDC"
 
-        pygame.mixer.init()
+        #  english models
+        # #"tts_models/en/ljspeech/glow-tts"
+        # #"tts_models/en/ljspeech/tacotron2-DDC"
+        # #"tts_models/en/ljspeech/tacotron2-DDC"
+        #"tts_models/de/thorsten/tacotron2-DDC" 
+
+        self.tts = TTS(model_name=model_name, progress_bar=False).to(device)
     
     def say_sentence(self, sentence): 
         self.play_words(sentence)
     
-    def play_words(self,sentence):
-        sentence = sentence.split()
+    def play_words(self, sentence):
+        # Generate audio data with Coqui TTS
+        wav = self.tts.tts(text=sentence)
+        wav = np.array(wav, dtype=np.float32)
 
-        for word in sentence:
-            sound_file = f"./audios/{word}.wav"
-            try:
-                sound = pygame.mixer.Sound(sound_file)
-                sound.play()
-                time.sleep(sound.get_length()-.15)  #
-            except pygame.error:
-                print(f"Sound file not found for word: {word}")
-
+        # Play the audio
+        sd.play(wav, samplerate=22050)  # Make sure the samplerate is correct for your model
+        sd.wait()
     
     def describe_pos_w_depth(self, cont_classes, clock):
 
@@ -106,4 +111,5 @@ class Sound_System():
         return sentence
     
     def close_mixer(self):
-        pygame.mixer.quit()
+        # No mixer to close in Coqui TTS
+        pass
