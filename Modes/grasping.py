@@ -15,8 +15,92 @@ import zmq
 import depthai as dai
 import time 
 
+UNWARP_ALPHA = 0
+
+def getUndistortMap(calibData, ispSize):
+	M1 = np.array(calibData.getCameraIntrinsics(dai.CameraBoardSocket.RIGHT, ispSize[0], ispSize[1]))
+	d1 = np.array(calibData.getDistortionCoefficients(dai.CameraBoardSocket.RIGHT))
+
+	R1 = None   #np.identity(3)
+
+	M2, _= cv2.getOptimalNewCameraMatrix(
+														M1,
+														d1,
+														ispSize,
+														UNWARP_ALPHA,
+														ispSize,
+														False
+													)
+
+
+	return cv2.initUndistortRectifyMap(M1, d1, R1, M2, ispSize, cv2.CV_32FC1)
+
+
+
+def vertical_squeeze(img, scale_factor):
+	# Get the dimensions of the input image
+	height, width = img.shape[:2]
+
+	# Generate remap coordinates
+	map_y = np.arange(0, height).astype(np.float32)
+	map_y = np.clip(map_y * scale_factor, 0, height - 1)
+
+	# Create remapped image using cv2.remap
+	remapped_img = cv2.remap(img, None, map_y, interpolation=cv2.INTER_LINEAR)
+
+	return remapped_img
+
+def getMesh(calibData: dai.CalibrationHandler, ispSize, focal_len_scaling_factor: float = .8):
+	M1 = np.array(calibData.getCameraIntrinsics(dai.CameraBoardSocket.RIGHT, ispSize[0], ispSize[1]))
+	d1 = np.array(calibData.getDistortionCoefficients(dai.CameraBoardSocket.RIGHT))
+	R1 = np.identity(3)
+	M1_new = M1.copy()
+	M1_new[0][0] *= focal_len_scaling_factor
+	M1_new[1][1] *= focal_len_scaling_factor
+	mapX, mapY = cv2.initUndistortRectifyMap(M1, d1, R1, M1_new, ispSize, cv2.CV_32FC1)
+
+	meshCellSize = 16
+	mesh0 = []
+	# Creates subsampled mesh which will be loaded on to device to undistort the image
+	for y in range(mapX.shape[0] + 1): # iterating over height of the image
+		if y % meshCellSize == 0:
+			rowLeft = []
+			for x in range(mapX.shape[1]): # iterating over width of the image
+				if x % meshCellSize == 0:
+					if y == mapX.shape[0] and x == mapX.shape[1]:
+						rowLeft.append(mapX[y - 1, x - 1])
+						rowLeft.append(mapY[y - 1, x - 1])
+					elif y == mapX.shape[0]:
+						rowLeft.append(mapX[y - 1, x])
+						rowLeft.append(mapY[y - 1, x])
+					elif x == mapX.shape[1]:
+						rowLeft.append(mapX[y, x - 1])
+						rowLeft.append(mapY[y, x - 1])
+					else:
+						rowLeft.append(mapX[y, x])
+						rowLeft.append(mapY[y, x])
+			if (mapX.shape[1] % meshCellSize) % 2 != 0:
+				rowLeft.append(0)
+				rowLeft.append(0)
+
+			mesh0.append(rowLeft)
+
+	mesh0 = np.array(mesh0)
+	meshWidth = mesh0.shape[1] // 2
+	meshHeight = mesh0.shape[0]
+	mesh0.resize(meshWidth * meshHeight, 2)
+
+	mesh = list(map(tuple, mesh0))
+
+	return mesh, meshWidth, meshHeight
+
 def calc_angle(frame, offset, HFOV):
-    return math.atan(math.tan(HFOV / 2.0) * offset / (frame.shape[1] / 2.0))
+	return math.atan(math.tan(HFOV / 2.0) * offset / (frame.shape[1] / 2.0))
+
+def getHFov(intrinsics, width):
+	fx = intrinsics[0][0]
+	fov = 2 * 180 / (math.pi) * math.atan(width * 0.5 / fx)
+	return fov
 
 def send_json(locate_socket, x_locs, y_locs, x_shape, y_shape, detected_classes, depth):
 	"""Sends json data for sound system."""
@@ -39,70 +123,87 @@ if __name__ == "__main__":
 	args = parser.parse_args()
 	context = zmq.Context()
 	locate_socket = context.socket(zmq.PUB)
-	locate_socket.bind("tcp://127.0.0.1:5558")
+	locate_socket.bind("tcp://127.0.0.1:5559")
 
 	# Optional. If set (True), the ColorCamera is downscaled from 1080p to 720p.
 	# Otherwise (False), the aligned depth is automatically upscaled to 1080p
 	downscaleColor = False
-	fps = 11
+	fps = 12
 	# The disparity is computed at this resolution, then upscaled to RGB resolution
-	monoResolution = dai.MonoCameraProperties.SensorResolution.THE_400_P
+	rgbResolution = dai.ColorCameraProperties.SensorResolution.THE_720_P
+
+	
 
 	# Create pipeline
+	
 	pipeline = dai.Pipeline()
 	device = dai.Device()
+	calibData = device.readCalibration2()
+	
 	queueNames = []
 
 	# Define sources and outputs
-	camRgb = pipeline.create(dai.node.ColorCamera)
-	left = pipeline.create(dai.node.MonoCamera)
-	right = pipeline.create(dai.node.MonoCamera)
+	left = pipeline.create(dai.node.ColorCamera)
+	right = pipeline.create(dai.node.ColorCamera)
 	stereo = pipeline.create(dai.node.StereoDepth)
 
-	rgbOut = pipeline.create(dai.node.XLinkOut)
-	depthOut = pipeline.create(dai.node.XLinkOut)
-
-	rgbOut.setStreamName("rgb")
-	queueNames.append("rgb")
-	depthOut.setStreamName("depth")
-	queueNames.append("depth")
-
-	#Properties
-	camRgb.setBoardSocket(dai.CameraBoardSocket.RGB)
-	#camRgb.setResolution(dai.ColorCameraProperties.SensorResolution.THE_12_MP)
-	#camRgb.setAs(False)
-	camRgb.setFps(fps)
-	if downscaleColor: camRgb.setIspScale(4, 13)
-	# For now, RGB needs fixed focus to properly align with depth.
-	# This value was used during calibration
 	try:
 		calibData = device.readCalibration2()
 		lensPosition = calibData.getLensPosition(dai.CameraBoardSocket.RGB)
 		if lensPosition:
-			camRgb.initialControl.setManualFocus(lensPosition)
+			right.initialControl.setManualFocus(lensPosition)
 	except:
 		raise
-	left.setResolution(monoResolution)
+
+	rightOut = pipeline.create(dai.node.XLinkOut)
+	depthOut = pipeline.create(dai.node.XLinkOut)
+
+	rightOut.setStreamName("rgb")
+	queueNames.append("rgb")
+	depthOut.setStreamName("depth")
+	queueNames.append("depth")
+
+	
+	left.setResolution(rgbResolution)
 	left.setBoardSocket(dai.CameraBoardSocket.LEFT)
 	left.setFps(fps)
-	right.setResolution(monoResolution)
+	right.setResolution(rgbResolution)
 	right.setBoardSocket(dai.CameraBoardSocket.RIGHT)
 	right.setFps(fps)
 
+	right.initialControl.setSharpness(0)     # range: 0..4, default: 1
+	right.initialControl.setLumaDenoise(0)   # range: 0..4, default: 1
+	right.initialControl.setChromaDenoise(4) # range: 0..4, default: 1
+	left.initialControl.setSharpness(0)     # range: 0..4, default: 1
+	left.initialControl.setLumaDenoise(0)   # range: 0..4, default: 1
+	left.initialControl.setChromaDenoise(4) # range: 0..4, default: 1
+
 	stereo.setDefaultProfilePreset(dai.node.StereoDepth.PresetMode.HIGH_DENSITY)
 	# LR-check is required for depth alignment
-	stereo.initialConfig.setMedianFilter(dai.MedianFilter.KERNEL_7x7)
+	#stereo.initialConfig.setMedianFilter(dai.MedianFilter.KERNEL_7x7)
 	stereo.setLeftRightCheck(True)
-	stereo.setSubpixel(False)
+	stereo.setSubpixel(True)
 	stereo.setExtendedDisparity(True) #best 
 	#stereo.setOutputSize(812, 608)
-	stereo.setDepthAlign(dai.CameraBoardSocket.RGB)
+	stereo.setDepthAlign(dai.CameraBoardSocket.RIGHT)
+	stereo.setAlphaScaling(UNWARP_ALPHA)
+	stereo.setRectifyEdgeFillColor(0)
+
+	#manip = pipeline.create(dai.node.ImageManip)
+	#mesh, meshWidth, meshHeight = getMesh(calibData, right.getIspSize())
+	#manip.setWarpMesh(mesh, meshWidth, meshHeight)
+	#manip.setMaxOutputFrameSize(right.getIspWidth() * right.getIspHeight() * 3 // 2)
+	#right.isp.link(manip.inputImage)
+
+	#cam_xout = pipeline.create(dai.node.XLinkOut)
+	#cam_xout.setStreamName("Undistorted")
+	#manip.out.link(cam_xout.input)
 
 	# Linking
-	camRgb.isp.link(rgbOut.input)
-	left.out.link(stereo.left)
-	right.out.link(stereo.right)
+	left.isp.link(stereo.left)
+	right.isp.link(stereo.right)
 	stereo.depth.link(depthOut.input)
+	right.isp.link(rightOut.input)
 
 	# Load Yolov5 model.
 	model = torch.hub.load('./yolov5', 'custom', path=f'./weights/{args.model}.pt', source='local') 
@@ -122,19 +223,23 @@ if __name__ == "__main__":
 		# Connect to device and start pipeline
 	with device:
 		device.startPipeline(pipeline)
-
+		calibData = device.readCalibration()
+		M, width, height = calibData.getDefaultIntrinsics(dai.CameraBoardSocket.RIGHT)
+		M = np.array(M)
+		mapX, mapY = getUndistortMap(calibData, right.getIspSize())
 		frameRgb = None
 		depthFrame = None
 
 		#device.setIrLaserDotProjectorBrightness(0) # in mA, 0..1200
 		#device.setIrFloodLightBrightness(0) # in mA, 0..1500
-
-		x_shape, y_shape = (1280,800)
+		width_resize = 1180
+		x_shape, y_shape = (width_resize,720)
 		#x_shape, y_shape = (1248, 936) #with set outputsize
 		latestPacket = {}
 		latestPacket["rgb"] = None
 		latestPacket["depth"] = None
-		HFOV = np.deg2rad(60.0)
+		#latestPacket["Undistorted"] = None
+		HFOV = getHFov(M, width)
 		#HFOV = np.deg2rad(90.0)
 		frame_count = 0
 		start_time = time.time()
@@ -151,24 +256,52 @@ if __name__ == "__main__":
 				
 			if latestPacket["rgb"]:
 				frameRgb = latestPacket["rgb"].getCvFrame()
+				frameRgb = cv2.remap(frameRgb, mapX, mapY, cv2.INTER_LINEAR)
 				#frameRgb = cv2.resize(frameRgb, (812, 608))
-				#cv2.imshow(rgbWindowName, frameRgb)
+				frameRgb = frameRgb[:,:width_resize]
+				cv2.imshow("frameRGB", frameRgb)
+
 
 			if latestPacket["depth"]:
 				depthFrame = latestPacket["depth"].getFrame()
 				depthAux = depthFrame[depthFrame != 0]
 				if not depthAux.any(): continue
-				#min_depth = np.percentile(depthAux, 1)
-				#max_depth = np.percentile(depthFrame, 99)
-				#depthFrameColor = np.interp(depthFrame, (min_depth, max_depth), (0, 255)).astype(np.uint8)
-				#depthFrameColor = cv2.applyColorMap(depthFrameColor, cv2.COLORMAP_JET)
-				#cv2.imshow("depth", depthFrameColor)
+				depthFrame = depthFrame[:, :width_resize]
+				# Define the range for calculating the mean
+				"""mean_range_start = 1150
+				mean_range_end = 1180
+
+				# Iterate through each row of the depth image
+				for row in range(depthFrame.shape[0]):
+					# Find the indices where the depth is zero
+					zero_indices = np.where(depthFrame[row, 1181:] == 0)[0]
+
+					# Check if there are zero values in the row
+					if len(zero_indices) > 0:
+						# Create a masked array where zeros are masked
+						masked_depth = np.ma.masked_where(depthFrame[row, 1181:] == 0, depthFrame[row, 1181:])
+						
+						# Calculate the mean over the unmasked values
+						mean_value = np.mean(masked_depth)
+
+						# Replace zero values with the calculated mean value
+						depthFrame[row, zero_indices + 1181] = mean_value"""
+
+				min_depth = np.percentile(depthFrame, 1)
+				max_depth = np.percentile(depthFrame, 99)
+				depthFrameColor = np.interp(depthFrame, (min_depth, max_depth), (0, 255)).astype(np.uint8)
+				depthFrameColor = cv2.applyColorMap(depthFrameColor, cv2.COLORMAP_JET)
+				cv2.imshow("depth", depthFrameColor)
+			
 
 			if frameRgb is not None and depthFrame is not None :
-				print(frameRgb.shape)
+				
 				# Run object detection inference over frame.
 				with torch.no_grad(): 
 					results = model(frameRgb)
+				
+				
+				
 				# Get labels and bounding boxes coordinates.
 				labels = results.xyxyn[0][:, -1].cpu().numpy()
 				cord = results.xyxyn[0][:, :-1].cpu().numpy()
@@ -177,11 +310,11 @@ if __name__ == "__main__":
 				y_locs = [0]*len(labels)
 				detected_classes = [0]*len(labels)
 				object_depth = [0]*len(labels)
-
+				new_points = []
 				for i in range(len(labels)):
 					row = cord[i]
 					# If confidence score is less than 0.45 we avoid making a prediction.
-					if row[4] < 0.35:
+					if row[4] < 0.2:
 						continue
 
 					x1 = int(row[0] * x_shape) 
@@ -192,7 +325,7 @@ if __name__ == "__main__":
 					x = x1 + (x2 - x1) // 2
 					y = y1 + (y2 - y1) // 2
 
-					z = np.median(depthFrame[y1:y2,x1:x2])
+					z = np.median(depthFrame[y1+5:y2-5,x1+5:x2-5])
 					x_dist = x - x_shape / 2
 					y_dist = y - y_shape / 2
 					x_dist = z*math.tan(calc_angle(depthFrame, x_dist, HFOV))
@@ -209,9 +342,22 @@ if __name__ == "__main__":
 					y_locs[i] = y / y_shape
 					detected_classes[i] = classes[int(labels[i])]
 					object_depth[i] = distance
+
+					remapped_x1, remapped_y1 = mapX[y1-1, x1-1], mapY[y1-1, x1-1]
+					remapped_x2, remapped_y2 = mapX[y2-1, x2-1], mapY[y2-1, x2-1]
+
+					new_points.append([remapped_x1, remapped_y1,remapped_x2, remapped_y2])
+					 # Draw circles on the remapped image
+					
+
 				
+				#frameRgb = cv2.remap(frameRgb, mapX, mapY, cv2.INTER_LINEAR)
+				#for remapped_x1, remapped_y1,remapped_x2, remapped_y2 in new_points:
+				#	cv2.circle(frameRgb, (int(remapped_x1), int(remapped_y1)), 5, (0, 0, 255), -1)  # Green circle for point 1
+				#	cv2.circle(frameRgb, (int(remapped_x2), int(remapped_y2)), 5, (0, 0, 255), -1)  # Red circle for point 2
+
 				send_json(locate_socket, x_locs, y_locs, x_shape, y_shape, detected_classes, object_depth)
-				#blended_frame = cv2.addWeighted(frameRgb, .7, depthFrameColor, .3 , 0)
+				blended_frame = cv2.addWeighted(frameRgb, .6, depthFrameColor, .4 , 0)
 				# Increment frame count
 				frame_count += 1
 				
@@ -219,12 +365,10 @@ if __name__ == "__main__":
 				end_time = time.time()
 				elapsed_time = end_time - start_time
 				fps = frame_count / elapsed_time
-				cv2.putText(frameRgb, "FPS: {:.2f}".format(fps), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-    
-				cv2.imshow("Blended Frame", frameRgb)
+				cv2.putText(blended_frame, "FPS: {:.2f}".format(fps), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+	
+				cv2.imshow("Blended Frame", blended_frame)
 
 			if cv2.waitKey(1) == ord('q'):
 
 				break
-
-			

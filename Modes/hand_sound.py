@@ -119,9 +119,9 @@ def voice_control_mode():
 	# Load sound system.
 	system = Sound_System()
 
-	angles = [0,10,25,40,55,70,85,95]
-	times = ["one-thirty","one-oclock","twelve-thirty","twelve-oclock","eleven-thirty","eleven-oclock","ten-thirty"]
-	inverted_times = ["ten-thirty","eleven-oclock","eleven-thirty","twelve-oclock","twelve-thirty","one-oclock", "one-thirty"]
+	angles = [0,15,30,45,60,75,90,105,120]
+	times = ["ten-oclock","ten-thirty","eleven-oclock","eleven-thirty","twelve-oclock","twelve-thirty","one-oclock", "one-thirty", "two-oclock"]
+	inverted_times = times
 
 	energy = .5
 	pause = 0.5
@@ -207,9 +207,10 @@ def keyboard_control_mode():
 	# Load sound system.
 	system = Sound_System()
 
-	angles = [0,10,25,40,55,70,85,95]
-	times = ["one-thirty","one-oclock","twelve-thirty","twelve-oclock","eleven-thirty","eleven-oclock","ten-thirty"]
-	inverted_times = ["ten-thirty","eleven-oclock","eleven-thirty","twelve-oclock","twelve-thirty","one-oclock", "one-thirty"]
+	angles = [0,15,30,45,60,75,90,105,120]
+	times = ["ten-oclock","ten-thirty","eleven-oclock","eleven-thirty","twelve-oclock","twelve-thirty","one-oclock", "one-thirty", "two-oclock"]
+	inverted_times = times[::-1]
+
 
 	time.sleep(4)
 
@@ -274,6 +275,7 @@ def grasp(system, grasping_memory, x_shape, y_shape):
 def localize(imagehub, system, angles, times, cls=None):
 
 	message = imagehub.recv_msg()
+	print(times)
 	obj = json.loads(message)
 	detections = zip(obj["x_locs"],obj["labels"], obj["depth"])
 	detections = sorted(detections, key=lambda tup: tup[0])
@@ -283,9 +285,9 @@ def localize(imagehub, system, angles, times, cls=None):
 		class_counts = {}
 		#could be faster y falta generar los audios
 		for i in range(len(detections)):
-			scaled_position = (1.0-detections[i][0])
+			scaled_position = detections[i][0]
 				
-			if angles[angle] <= scaled_position*95 <= angles[angle+1]:
+			if angles[angle] <= scaled_position*120 <= angles[angle+1]:
 				# here we count 
 				if cls and detections[i][1] != cls:
 					continue
@@ -300,7 +302,7 @@ def localize(imagehub, system, angles, times, cls=None):
 				break
 			
 		if class_counts:
-			print(class_counts)
+			print(class_counts, times, angle)
 			sentence = system.describe_pos_w_depth(class_counts, times[angle])
 			power_gpio()
 				#system.play_sound("person_slow" + ".wav", rho, scaled_position, phi)
@@ -311,6 +313,7 @@ def localize(imagehub, system, angles, times, cls=None):
 def localization(imagehub, system, angles, times):
 
 	message = imagehub.recv_msg()
+	print(times)
 	if message:
 		obj = json.loads(message)
 		detections = zip(obj["x_locs"],obj["labels"], obj["depth"])
@@ -323,7 +326,7 @@ def localization(imagehub, system, angles, times):
 				if detections[i][1] == 0: continue
 				scaled_position = detections[i][0]
 					
-				if angles[angle] <= scaled_position*95 <= angles[angle+1]:
+				if angles[angle] <= scaled_position*120 <= angles[angle+1]:
 					# here we count 
 					feet = depth_to_feet(detections[i][2])
 					if detections[i][1] in class_counts:
@@ -335,7 +338,7 @@ def localization(imagehub, system, angles, times):
 					break
 				
 			if class_counts:
-				print(class_counts)
+				print(class_counts, angle, times)
 				sentence = system.describe_pos_w_depth(class_counts, times[angle])
 				power_gpio()
 				#system.play_sound("person_slow" + ".wav", rho, scaled_position, phi)
