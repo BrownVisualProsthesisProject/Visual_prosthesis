@@ -173,6 +173,7 @@ def voice_control_mode(voice_mode):
 			message = imagehub.recv_msg()
 			obj = json.loads(message)
 			print("=====",closest_match)
+			print("=====",obj["labels"])
 			if closest_match == "list":
 				describe(imagehub, system, times)
 				power_gpio()

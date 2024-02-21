@@ -48,7 +48,7 @@ def choose_mode(currentKey):
             current_stream = subprocess.Popen([python_version, 'Modes/grasping.py'])
             audio_stream = subprocess.Popen([python_version, 'Modes/hand_sound.py', "--approach", "1"]) #type 1
         elif currentKey == "4":
-            current_stream = subprocess.Popen([python_version, 'Modes/grasping.py',"--model", "yolov5m"])
+            current_stream = subprocess.Popen([python_version, 'Modes/grasping.py'])
             audio_stream = subprocess.Popen([python_version, 'Modes/hand_sound.py', "--approach", "2"]) #type 1
 
     elif currentKey == "2":
