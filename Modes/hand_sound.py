@@ -148,7 +148,8 @@ def voice_control_mode(voice_mode):
 			speech = result_queue.get() 
 			closest_match = find_closest_match(speech)
 		else:
-			closest_match = input("label/list/find: ")
+			speech = input("label/list/find: ")
+			closest_match = find_closest_match(speech)
 
 		if not closest_match: 
 			continue
