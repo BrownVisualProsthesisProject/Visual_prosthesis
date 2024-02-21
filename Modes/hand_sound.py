@@ -110,7 +110,7 @@ def transcribe_forever(audio_queue, result_queue, audio_model):
 		result_queue.put_nowait(result["text"])
 
 
-def voice_control_mode():
+def voice_control_mode(voice_mode):
 	hostname = 'tcp://127.0.0.1:5559'  # Use to receive from localhost
 	# hostname = "192.168.86.38"  # Use to receive from other computer
 	port = 5559
@@ -126,23 +126,30 @@ def voice_control_mode():
 	energy = .5
 	pause = 0.5
 	dynamic_energy = False
-
-	audio_model = whisper.load_model("tiny.en", download_root="./weights")
-	audio_queue = queue.Queue()
-	result_queue = queue.Queue()
-	record_thread = threading.Thread(target=record_audio,
-					 args=(audio_queue, energy, pause, dynamic_energy))
-	record_thread.start()
-	transcribe_thread = threading.Thread(target=transcribe_forever,
-					 args=(audio_queue, result_queue, audio_model))
-	time.sleep(4)
-	transcribe_thread.start()
+	
+	if voice_mode == 1:
+		audio_model = whisper.load_model("tiny.en", download_root="./weights")
+		audio_queue = queue.Queue()
+		result_queue = queue.Queue()
+		record_thread = threading.Thread(target=record_audio,
+						args=(audio_queue, energy, pause, dynamic_energy))
+		record_thread.start()
+		transcribe_thread = threading.Thread(target=transcribe_forever,
+						args=(audio_queue, result_queue, audio_model))
+		time.sleep(4)
+		transcribe_thread.start()
+		
 	if platform.machine() == "aarch64":
 		GPIO.setmode(GPIO.BOARD)
 		GPIO.setup(CHANNEL, GPIO.OUT)
 	while True:
-		speech = result_queue.get() 
-		closest_match = find_closest_match(speech)
+
+		if voice_mode == 1:
+			speech = result_queue.get() 
+			closest_match = find_closest_match(speech)
+		else:
+			closest_match = input("label/list/find: ")
+
 		if not closest_match: 
 			continue
 		if len(closest_match)>14:
@@ -153,8 +160,9 @@ def voice_control_mode():
 			time.sleep(1.5)
 			global stop_flag
 			stop_flag = True
-			transcribe_thread.join()
-			record_thread.join()
+			if voice_mode == 1:
+				transcribe_thread.join()
+				record_thread.join()
 			system.close_mixer()
 			if platform.machine() == "aarch64":
 				GPIO.cleanup()
@@ -193,70 +201,6 @@ def power_gpio():
 		GPIO.output(CHANNEL, GPIO.HIGH)
 		time.sleep(.03)
 		GPIO.output(CHANNEL, GPIO.LOW)
-		
-def keyboard_control_mode():
-	if platform.machine() == "aarch64":
-		GPIO.setmode(GPIO.BOARD)
-		channel = 15
-		GPIO.setup(channel, GPIO.OUT)
-	hostname = 'tcp://127.0.0.1:5559'  # Use to receive from localhost
-	# hostname = "192.168.86.38"  # Use to receive from other computer
-	port = 5559
-
-	imagehub = MessageStreamSubscriberEvent(hostname, port)
-	# Load sound system.
-	system = Sound_System()
-
-	angles = [0,15,30,45,60,75,90,105,120]
-	times = ["ten-oclock","ten-thirty","eleven-oclock","eleven-thirty","twelve-oclock","twelve-thirty","one-oclock", "one-thirty", "two-oclock"]
-	inverted_times = times[::-1]
-
-
-	time.sleep(4)
-
-	while True:
-		closest_match = input("label/list/find: ")
-
-		if closest_match == "mute":
-			closest_match = input("label/list/find: ")
-
-		print("=====",closest_match)
-
-		if closest_match == "close":
-			time.sleep(1.5)
-			system.say_sentence("finishing")
-			system.close_mixer()
-			if platform.machine() == "aarch64":
-				GPIO.cleanup()
-			break
-
-		if closest_match:
-			message = imagehub.recv_msg()
-			obj = json.loads(message)
-			
-			if closest_match == "list":
-				describe(imagehub, system, times)
-				power_gpio()
-			elif closest_match == "find":
-				localization(imagehub, system, angles, inverted_times)
-				power_gpio()
-			elif closest_match in obj["labels"]:
-				message = imagehub.recv_msg()
-				#obj = json.loads(message)
-				detections = zip(obj["x_locs"],obj["labels"], obj["depth"],obj["y_locs"])
-				detections = sorted(detections, key=lambda tup: tup[2])
-				
-				for i in range(len(detections)):
-					if detections[i][1] == closest_match:
-						print("====",detections[i][2])
-						if detections[i][2] < 1.2*1000:
-							grasp(system, detections[i], obj["x_shape"], obj["y_shape"])
-						else:
-							localize(imagehub, system, angles, times, closest_match)
-						break
-				power_gpio()
-			else:
-				system.say_sentence("Sorry-I-cant-locate-that")
 
 def grasp(system, grasping_memory, x_shape, y_shape):
 
@@ -380,6 +324,6 @@ if __name__ == "__main__":
 	print(args.approach, type(args.approach))
 	time.sleep(3)
 	if args.approach == 1:
-		voice_control_mode()
+		voice_control_mode(1)
 	elif args.approach == 2:
-		keyboard_control_mode()
+		voice_control_mode(0)
