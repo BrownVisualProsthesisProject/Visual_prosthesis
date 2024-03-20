@@ -1,17 +1,26 @@
+
+
 # Main
-opencv-python == 4.6.0.66
-pynput == 1.7.6
-pyttsx3 == 2.90
-imagezmq == 1.1.1 
+opencv-python
+opencv-contrib-python 
+pygame 
+gtts 
+ultralytics 
+rapidfuzz 
+onnxruntime
+pynput
+pyttsx3
+imagezmq
 python-openal
-easyocr
 mediapipe
-easyocr
 simplejpeg
 pydub
-tesserocr==2.5.2
-scikit-image==0.17.2
 imutils
+protobuf==3.20.3
+scikit-image==0.17.2
+
+#GPIO
+Jetson.GPIO
 
 #Yolov5
 

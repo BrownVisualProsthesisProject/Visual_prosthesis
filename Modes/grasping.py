@@ -193,7 +193,6 @@ if __name__ == "__main__":
 
 	matching_counter = 5
 
-
 	counter = 0
 
 		# Connect to device and start pipeline
@@ -212,6 +211,11 @@ if __name__ == "__main__":
 		width_resize = 1180
 		x_shape, y_shape = (width_resize,720)
 		#x_shape, y_shape = (1248, 936) #with set outputsize
+
+		# List of percentages
+		percentages = [7.5, 22.5, 37.5, 52.5, 67.5, 82.5, 97.5, 112.5]
+		x_coordinates = [int(p * width_resize / 120) for p in percentages]
+
 		latestPacket = {}
 		latestPacket["rgb"] = None
 		latestPacket["depth"] = None
@@ -311,9 +315,9 @@ if __name__ == "__main__":
 				elapsed_time = end_time - start_time
 				fps = frame_count / elapsed_time
 				cv2.putText(blended_frame, "FPS: {:.2f}".format(fps), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-	
+				for x in x_coordinates:
+					cv2.line(blended_frame, (x, 0), (x, blended_frame.shape[0]), (0, 0, 255), 2)  # Green color with thickness 2
 				cv2.imshow("Blended Frame", blended_frame)
 
 			if cv2.waitKey(1) == ord('q'):
-
 				break

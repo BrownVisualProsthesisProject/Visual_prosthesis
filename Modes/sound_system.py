@@ -13,9 +13,11 @@ class Sound_System():
         self.play_words(sentence)
     
     def play_words(self,sentence):
-        sentence = sentence.split()
-
+        sentence = sentence.split("_")
+        print(sentence)
         for word in sentence:
+            if word == "":
+                continue
             sound_file = f"./audios/{word}.wav"
             try:
                 sound = pygame.mixer.Sound(sound_file)
@@ -32,27 +34,27 @@ class Sound_System():
         for cls in cont_classes:
             num_items-=1
             if len(cont_classes)>1 and num_items == 0:
-                sentence+="and "
+                sentence+="and_"
             if len(cont_classes[cls]) > 1:
                 sentence+="multiple-" + PLURALS[cls]
             else:
                 sentence+= LABELS[cls]
-            sentence+=" "
+            sentence+="_"
 
         if len(cont_classes[cls]) > 1:
             if cont_classes[cls][0]<1.0:
-                sentence += f" at-{clock} the-closest at-less-than-1-feet"
+                sentence += f"_at-{clock}_the-closest_at-less-than-1-feet"
             else:
-                sentence += f" at-{clock} the-closest at{min(cont_classes[cls])}-feet"
+                sentence += f"_at-{clock}_the-closest_at{min(cont_classes[cls])}-feet"
             
         else:
             
             if cont_classes[cls][0]<1.0:
-                sentence += f" at-{clock} at-less-than-1-feet"
+                sentence += f"_at-{clock}_at-less-than-1-feet"
             elif cont_classes[cls][0]>25.0:
-                sentence += f" at-{clock} at-over-25-feet" 
+                sentence += f"_at-{clock}_at-over-25-feet" 
             else:
-                sentence += f" at-{clock} at{cont_classes[cls][0]}-feet" 
+                sentence += f"_at-{clock}_at{cont_classes[cls][0]}-feet" 
                 
             
 
@@ -66,14 +68,14 @@ class Sound_System():
         for cls in cont_classes:
             num_items-=1
             if len(cont_classes)>1 and num_items == 0:
-                sentence+="and "
+                sentence+="and_"
             if cont_classes[cls] > 1:
                 sentence+="multiple-" + PLURALS[cls]
             else:
                 sentence+= LABELS[cls]  
-            sentence+=" "
+            sentence+="_"
 
-        sentence += f" at-{clock}"             
+        sentence += f"_at-{clock}"             
 
         self.play_words(sentence)
         return sentence
@@ -86,14 +88,14 @@ class Sound_System():
         for cls in cont_classes:
             num_items-=1
             if len(cont_classes)>1 and num_items == 0:
-                sentence+="and "
+                sentence+="and_"
             if cont_classes[cls] > 1:
                 sentence+="multiple-" + PLURALS[cls]
             else:
                 sentence+= LABELS[cls] 
-            sentence+=" "
+            sentence+="_"
 
-        sentence += f" in-the-scene"             
+        sentence += f"_in-the-scene"             
 
         self.play_words(sentence)
         return sentence

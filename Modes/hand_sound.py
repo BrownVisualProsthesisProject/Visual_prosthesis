@@ -36,6 +36,19 @@ def find_closest_match(word):
 			closest_match = key
 
 	return closest_match
+
+def find_closest_match(word, objects):
+	max_score = -1
+	closest_match = None
+	word_cleaned = word.translate(str.maketrans('', '', string.punctuation)).lower()
+	print(word_cleaned)
+	for key in objects:
+		score = fuzz.ratio(word_cleaned, key)
+		if score > .6 and score > max_score :
+			max_score = score
+			closest_match = key
+
+	return closest_match
 	
 def depth_to_feet(mm):
 	feet = mm / 304.8
@@ -106,7 +119,7 @@ def transcribe_forever(audio_queue, result_queue, audio_model):
 	
 	while not stop_flag:
 		audio_data = audio_queue.get()
-		result = audio_model.transcribe(audio_data,language='english', fp16 = True, initial_prompt = INITIAL_PROMPT, patience=2, beam_size=5)
+		result = audio_model.transcribe(audio_data,language='english', fp16 = True, initial_prompt = INITIAL_PROMPT, patience=2, beam_size=10)
 		result_queue.put_nowait(result["text"])
 
 
@@ -119,11 +132,12 @@ def voice_control_mode(voice_mode):
 	# Load sound system.
 	system = Sound_System()
 
-	angles = [0,15,30,45,60,75,90,105,120]
+	#angles = [0,15,30,45,60,75,90,105,120]
+	angles = [0, 7.5, 22.5, 37.5, 52.5, 67.5,82.5,97.5,112.5,120]
 	times = ["ten-oclock","ten-thirty","eleven-oclock","eleven-thirty","twelve-oclock","twelve-thirty","one-oclock", "one-thirty", "two-oclock"]
 	inverted_times = times
 
-	energy = .5
+	energy = .4
 	pause = 0.5
 	dynamic_energy = False
 	
@@ -146,10 +160,14 @@ def voice_control_mode(voice_mode):
 
 		if voice_mode == 1:
 			speech = result_queue.get() 
-			closest_match = find_closest_match(speech)
 		else:
 			speech = input("label/list/find: ")
-			closest_match = find_closest_match(speech)
+			
+		
+		message = imagehub.recv_msg()
+		obj = json.loads(message)
+		objects_list = obj["labels"]+['find', 'list', 'close']
+		closest_match = find_closest_match(speech, objects_list)
 
 		if not closest_match: 
 			continue
@@ -169,34 +187,32 @@ def voice_control_mode(voice_mode):
 				GPIO.cleanup()
 			break
 
-		if closest_match:
+		
+		print("=====",closest_match)
+		print("=====",obj["labels"])
+		if closest_match == "list":
+			describe(imagehub, system, times)
+			power_gpio()
+		elif closest_match == "find":
+			localization(imagehub, system, angles, inverted_times)
+			power_gpio()
+		elif closest_match in obj["labels"]:
 			message = imagehub.recv_msg()
-			obj = json.loads(message)
-			print("=====",closest_match)
-			print("=====",obj["labels"])
-			if closest_match == "list":
-				describe(imagehub, system, times)
-				power_gpio()
-			elif closest_match == "find":
-				localization(imagehub, system, angles, inverted_times)
-				power_gpio()
-			elif closest_match in obj["labels"]:
-				message = imagehub.recv_msg()
-				#obj = json.loads(message)
-				detections = zip(obj["x_locs"],obj["labels"], obj["depth"],obj["y_locs"])
-				detections = sorted(detections, key=lambda tup: tup[2])
-				
-				for i in range(len(detections)):
-					if detections[i][1] == closest_match:
-						print("====",detections[i][2])
-						if detections[i][2] < 1.2*1000:
-							grasp(system, detections[i], obj["x_shape"], obj["y_shape"])
-						else:
-							localize(imagehub, system, angles, times, closest_match)
-						break
-				power_gpio()
-			else:
-				system.say_sentence("Sorry-I-cant-locate-that")
+			#obj = json.loads(message)
+			detections = zip(obj["x_locs"],obj["labels"], obj["depth"],obj["y_locs"])
+			detections = sorted(detections, key=lambda tup: tup[2])
+			
+			for i in range(len(detections)):
+				if detections[i][1] == closest_match:
+					print("====",detections[i][2])
+					#if detections[i][2] < 1.2*1000:
+					#	grasp(system, detections[i], obj["x_shape"], obj["y_shape"])
+					#else:
+					localize(imagehub, system, angles, times, closest_match)
+					break
+			power_gpio()
+		else:
+			system.say_sentence("Sorry-I-cant-locate-that")
 
 def power_gpio():
 	if platform.machine() == "aarch64":
@@ -210,9 +226,9 @@ def grasp(system, grasping_memory, x_shape, y_shape):
 	movement = calculate_distance(obj_x, obj_y, x_shape, y_shape)
 	feet = depth_to_feet(depth)
 	if feet < 1.0:
-		sentence = f"{LABELS[label]} {movement} at-less-than-1-foot"
+		sentence = f"{LABELS[label]}_{movement}_at-less-than-1-foot"
 	else:
-		sentence = f"{LABELS[label]} {movement} at{feet}-feet"
+		sentence = f"{LABELS[label]}_{movement}_at{feet}-feet"
 
 	system.say_sentence(sentence)
 
