@@ -108,9 +108,6 @@ if __name__ == "__main__":
 	parser.add_argument("--model", default="yolov5m_Objects365", type=str)
 	parser.add_argument("--distort", default=0, type=str)
 	args = parser.parse_args()
-	context = zmq.Context()
-	locate_socket = context.socket(zmq.PUB)
-	locate_socket.bind("tcp://127.0.0.1:5559")
 
 	# Optional. If set (True), the ColorCamera is downscaled from 1080p to 720p.
 	# Otherwise (False), the aligned depth is automatically upscaled to 1080p
@@ -120,6 +117,7 @@ if __name__ == "__main__":
 	rgbResolution = dai.ColorCameraProperties.SensorResolution.THE_1080_P
 
 	# Create pipeline
+	
 	pipeline = dai.Pipeline()
 	device = dai.Device()
 	calibData = device.readCalibration2()
@@ -180,16 +178,6 @@ if __name__ == "__main__":
 	stereo.depth.link(depthOut.input)
 	right.isp.link(rightOut.input)
 
-	# Load Yolov5 model.
-	model = torch.hub.load('./yolov5', 'custom', path=f'./weights/{args.model}.pt', source='local') 
-	model.half() #should I img.half????
-	# Box color.
-	bgr = (0, 255, 0)  # color of the box
-	# Get labels.
-	classes = model.names
-	# Font config for the label.
-	label_font = cv2.FONT_HERSHEY_COMPLEX
-
 	matching_counter = 5
 
 	counter = 0
@@ -228,7 +216,7 @@ if __name__ == "__main__":
 			
 			# Perform object detection every odd frame
 			#if counter % 2 == 0:
-			queueEvents = device.getQueueEvents(("rgb", "depth"))
+			queueEvents = device.getQueueEvents(("rgb","depth"))
 			for queueName in queueEvents:
 				packets = device.getOutputQueue(queueName).tryGetAll()
 				if len(packets) > 0:
@@ -243,80 +231,18 @@ if __name__ == "__main__":
 				cv2.imshow("frameRGB", frameRgb)
 
 
-			if latestPacket["depth"]:
-				depthFrame = latestPacket["depth"].getFrame()
-				depthAux = depthFrame[depthFrame != 0]
-				if not depthAux.any(): continue
-				depthFrame = depthFrame[:, :width_resize]
-
-				min_depth = np.percentile(depthFrame, 1)
-				max_depth = np.percentile(depthFrame, 99)
-				depthFrameColor = np.interp(depthFrame, (min_depth, max_depth), (0, 255)).astype(np.uint8)
-				depthFrameColor = cv2.applyColorMap(depthFrameColor, cv2.COLORMAP_JET)
-				cv2.imshow("depth", depthFrameColor)
-			
-
-			if frameRgb is not None and depthFrame is not None :
+				# Check for key press
+				key = cv2.waitKey(1)
 				
-				# Run object detection inference over frame.
-				with torch.no_grad(): 
-					results = model(frameRgb)
-				
-				# Get labels and bounding boxes coordinates.
-				labels = results.xyxyn[0][:, -1].cpu().numpy()
-				cord = results.xyxyn[0][:, :-1].cpu().numpy()
+				# If 'q' is pressed, exit the loop
+				if key == ord('q'):
+					break
+				# If 'p' is pressed, save the frame
+				elif key == ord('p'):
+					cv2.imwrite("dataset/photo_{}.jpg".format(time.strftime("%Y%m%d-%H%M%S")), frameRgb)
+					print("Photo saved.")
 
-				x_locs = [0]*len(labels)
-				y_locs = [0]*len(labels)
-				detected_classes = [0]*len(labels)
-				object_depth = [0]*len(labels)
-				new_points = []
-				for i in range(len(labels)):
-					row = cord[i]
-					# If confidence score is less than 0.45 we avoid making a prediction.
-					if row[4] < 0.2:
-						continue
-
-					x1 = int(row[0] * x_shape) 
-					y1 = int(row[1] * y_shape)
-					x2 = int(row[2] * x_shape)
-					y2 = int(row[3] * y_shape)
-
-					x = x1 + (x2 - x1) // 2
-					y = y1 + (y2 - y1) // 2
-
-					z = np.median(depthFrame[y1+5:y2-5,x1+5:x2-5])
-					x_dist = x - x_shape / 2
-					y_dist = y - y_shape / 2
-					x_dist = z*math.tan(calc_angle(depthFrame, x_dist, HFOV))
-					y_dist = z*math.tan(calc_angle(depthFrame, y_dist, HFOV))
-
-					distance = math.sqrt(x_dist ** 2 + y_dist ** 2 + z ** 2)
-					#distance = math.sqrt(x ** 2 + y ** 2 + z ** 2)
-					# Plot the boxes and text.
-					cv2.rectangle(frameRgb, (x1, y1), (x2, y2), bgr, 2)
-					cv2.putText(frameRgb, classes[int(labels[i])], (x1, y1), label_font, 2, bgr, 2)
-					cv2.putText(frameRgb, "{:.1f} m".format(distance/1000), (x1 + 10, y1 + 20), label_font, 0.7, (0,100,255))
-	
-					x_locs[i] = x / x_shape
-					y_locs[i] = y / y_shape
-					detected_classes[i] = classes[int(labels[i])]
-					object_depth[i] = distance
+	# Release the VideoCapture object and close all OpenCV windows
+	cv2.destroyAllWindows()
 
 
-				send_json(locate_socket, x_locs, y_locs, x_shape, y_shape, detected_classes, object_depth)
-				blended_frame = cv2.addWeighted(frameRgb, .6, depthFrameColor, .4 , 0)
-				# Increment frame count
-				frame_count += 1
-				
-				# Calculate FPS
-				end_time = time.time()
-				elapsed_time = end_time - start_time
-				fps = frame_count / elapsed_time
-				cv2.putText(blended_frame, "FPS: {:.2f}".format(fps), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-				for x in x_coordinates:
-					cv2.line(blended_frame, (x, 0), (x, blended_frame.shape[0]), (0, 0, 255), 2)  # Green color with thickness 2
-				cv2.imshow("Blended Frame", blended_frame)
-
-			if cv2.waitKey(1) == ord('q'):
-				break

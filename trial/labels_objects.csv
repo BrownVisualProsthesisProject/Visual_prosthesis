@@ -1,21 +1,44 @@
-object_class,object_name,labels
-Books,book,A
-Reusable bags,bag,B
-Clocks,clock,C
-Small plants,potted plant,D
-Water bottles,bottle,E
-Cups/mugs,cup,F
-Phones,cell phone,G
-Computer mice,mouse,H
-Laptops,laptop,I
-Plants,potted plant,J
-Shoes/sneakers,shoes,K
-Bowls,bowl,L
-Plates,plate,M
-Backpacks,backpack,N
-Boxes,storage box,O
-Power outlets,power outlet,P
-Tall pots,pot,Q
-Sports balls,ball,R
-Keyboards,keyboard,S
+labels,object_name,distance
+A1,book,near
+A2,book,near
+A3,book,near
+A4,book,near
+A5,book,near
+B1,bag,far
+B2,bag,far
+B3,bag,far
+C1,clock,far
+C2,clock,near
+C3,clock,far
+C4,clock,far
+C5,clock,near
+D1,potted plant,near
+D2,potted plant,near
+E1,water bottle,near
+E2,water bottle,near
+E3,water bottle,near
+E4,water bottle,near
+F1,cup,near
+F2,cup,near
+F3,cup,near
+F4,cup,near
+F5,cup,near
+F6,cup,near
+G1,phone,near
+G2,phone,near
+G3,phone,near
+G4,phone,near
+H1,computer mouse,near
+H2,computer mouse,near
+H3,computer mouse,near
+I1,laptop,far
+I2,laptop,far
+K1,shoe,both
+K2,shoe,both
+K3,shoe,both
+M1,plate,near
+M2,plate,near
+M3,plate,near
+S1,keyboard,far
+
 

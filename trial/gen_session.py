@@ -6,6 +6,22 @@ import platform
 import time
 import pandas as pd
 
+key = {
+    'A': 'book',
+    'B': 'bag',
+    'C': 'clock',
+    'D': 'potted plant',
+    'E': 'water bottle',
+    'F': 'cup',
+    'G': 'phone',
+    'H': 'computer mouse',
+    'I': 'laptop',
+    'K': 'shoe',
+    'M': 'plate',
+    'S': 'keyboard'
+}
+
+
 if platform.machine() == "aarch64":
 	import Jetson.GPIO as GPIO
 
@@ -40,7 +56,7 @@ if platform.machine() == "aarch64":
 # Example usage:
 sound_system = Sound_System()
 times = ["ten-oclock","ten-thirty","eleven-oclock","eleven-thirty","twelve-oclock","twelve-thirty","one-oclock", "one-thirty", "two-oclock"]
-df = pd.read_csv('close_trials_file.csv')
+df = pd.read_csv('close_trials_file_1.csv')
 
 target_position = 'target position'  # Name of the first column
 target_label = 'target object'  # Name of the second column
@@ -69,7 +85,6 @@ while True:
 
         # Accessing information from specific row and columns using iloc
         info = df.iloc[row_index][[target_position, target_label]]
-            
     
     elif action == "b":
         if row_index <=0:
@@ -79,8 +94,8 @@ while True:
         # Accessing information from specific row and columns using iloc
         info = df.iloc[row_index][[target_position, target_label]]
         
-
-    sentence = f"{info[target_label]}_at-{times[info[target_position]-1]}_at3.0-feet"
+    print(info[target_label])
+    sentence = f"{key[info[target_label][0]]}_at-{times[info[target_position]-1]}_at3.0-feet"
     sound_system.play_words(sentence)
 
     if platform.machine() == "aarch64":
