@@ -1,5 +1,6 @@
 import pandas as pd
 import random
+from constants import KEY
 
 def gen_distractor_pos(target_pos, positions, far=True):
     if not far:
@@ -54,11 +55,11 @@ for i in range(7):
     print(distractor_positions,target_position)
     row = {
         'target position': target_position,
-        'target object': target_object,
+        'target object': f"{target_object} ({KEY[target_object[0]]})",
         'distractor object position 1': distractor_positions[0],
-        'distractor object 1': distractor_objects[0],
+        'distractor object 1': f"{distractor_objects[0]} ({KEY[distractor_objects[0][0]]})",
         'distractor object position 2': distractor_positions[1],
-        'distractor object 2': distractor_objects[1],
+        'distractor object 2': f"{distractor_objects[1]} ({KEY[distractor_objects[1][0]]})",
     }
     new_data.append(row)
     objects+=aux_list
@@ -82,12 +83,11 @@ for _ in range(3):
     print(distractor_positions,target_position)
     row = {
         'target position': target_position,
-        'target object': target_object,
+        'target object': f"{target_object} ({KEY[target_object[0]]})",
         'distractor object position 1': distractor_positions[0],
-        'distractor object 1': distractor_objects[0],
+        'distractor object 1': f"{distractor_objects[0]} ({KEY[distractor_objects[0][0]]})",
         'distractor object position 2': distractor_positions[1],
-        'distractor object 2': distractor_objects[1],
-        
+        'distractor object 2': f"{distractor_objects[1]} ({KEY[distractor_objects[1][0]]})",
     }
     new_data.append(row)
     objects+=aux_list

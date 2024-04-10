@@ -5,21 +5,7 @@ from rapidfuzz import fuzz
 import platform
 import time
 import pandas as pd
-
-key = {
-    'A': 'book',
-    'B': 'bag',
-    'C': 'clock',
-    'D': 'potted plant',
-    'E': 'water bottle',
-    'F': 'cup',
-    'G': 'phone',
-    'H': 'computer mouse',
-    'I': 'laptop',
-    'K': 'shoe',
-    'M': 'plate',
-    'S': 'keyboard'
-}
+from constants import KEY as key
 
 
 if platform.machine() == "aarch64":
@@ -64,6 +50,12 @@ row_index = -1  # Index of the specific row
 
 while True:
     action = input("Enter word and time (type 'q' to quit): ")
+
+    if action == 't':
+        if platform.machine() == "aarch64":
+            GPIO.output(channel, GPIO.HIGH)
+            time.sleep(1)
+            GPIO.output(channel, GPIO.LOW)
     
     if action == 'q':
         break
