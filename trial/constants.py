@@ -3,12 +3,12 @@ KEY = {
     'B': 'bag',
     'C': 'clock',
     'D': 'potted plant',
-    'E': 'water bottle',
+    'E': 'bottle',
     'F': 'cup',
     'G': 'phone',
-    'H': 'computer mouse',
+    'H': 'mouse',
     'I': 'laptop',
-    'K': 'shoe',
+    'K': 'shoes',
     'M': 'plate',
     'S': 'keyboard'
 }

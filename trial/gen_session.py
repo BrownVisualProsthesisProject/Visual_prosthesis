@@ -41,8 +41,8 @@ if platform.machine() == "aarch64":
     GPIO.setup(channel, GPIO.OUT)
 # Example usage:
 sound_system = Sound_System()
-times = ["ten-oclock","ten-thirty","eleven-oclock","eleven-thirty","twelve-oclock","twelve-thirty","one-oclock", "one-thirty", "two-oclock"]
-file_name = 'close_trials_0_control.csv'
+times = ["ten-thirty","eleven-oclock","eleven-thirty","twelve-oclock","twelve-thirty","one-oclock", "one-thirty"]
+file_name = 'close_trials_1_experimental.csv'
 file_split = file_name.split("_")
 df = pd.read_csv(file_name)
 
@@ -58,7 +58,7 @@ while True:
             GPIO.output(channel, GPIO.HIGH)
             time.sleep(1)
             GPIO.output(channel, GPIO.LOW)
-    
+        continue
     if action == 'q':
         break
 
@@ -92,7 +92,11 @@ while True:
     if file_split[-1][0] == "c":
         sentence = f"{key[info[target_label][0]]}"
     else:
-        sentence = f"{key[info[target_label][0]]}_at-{times[info[target_position]-1]}_at3.0-feet"
+        if file_split[0][0] == "c":
+            dis = "at3.0-feet"
+        else:
+            dis = "at10.0-feet"
+        sentence = f"{key[info[target_label][0]]}_at-{times[info[target_position]-1]}_{dis}"
     sound_system.play_words(sentence)
 
     if platform.machine() == "aarch64":
