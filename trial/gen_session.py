@@ -42,7 +42,9 @@ if platform.machine() == "aarch64":
 # Example usage:
 sound_system = Sound_System()
 times = ["ten-oclock","ten-thirty","eleven-oclock","eleven-thirty","twelve-oclock","twelve-thirty","one-oclock", "one-thirty", "two-oclock"]
-df = pd.read_csv('close_trials_file_1.csv')
+file_name = 'close_trials_0_control.csv'
+file_split = file_name.split("_")
+df = pd.read_csv(file_name)
 
 target_position = 'target position'  # Name of the first column
 target_label = 'target object'  # Name of the second column
@@ -87,7 +89,10 @@ while True:
         info = df.iloc[row_index][[target_position, target_label]]
         
     print(info[target_label])
-    sentence = f"{key[info[target_label][0]]}_at-{times[info[target_position]-1]}_at3.0-feet"
+    if file_split[-1][0] == "c":
+        sentence = f"{key[info[target_label][0]]}"
+    else:
+        sentence = f"{key[info[target_label][0]]}_at-{times[info[target_position]-1]}_at3.0-feet"
     sound_system.play_words(sentence)
 
     if platform.machine() == "aarch64":
