@@ -1,0 +1,11 @@
+target position,target object,distractor object position 1,distractor object 1,distractor object position 2,distractor object 2
+7,C2 (clock),3,E4 (water bottle),2,K1 (shoe)
+2,F4 (cup),7,K1 (shoe),5,K2 (shoe)
+4,G2 (phone),1,H1 (computer mouse),6,E3 (water bottle)
+6,K1 (shoe),1,E3 (water bottle),2,M2 (plate)
+6,M1 (plate),2,G4 (phone),3,E2 (water bottle)
+3,H1 (computer mouse),5,D1 (potted plant),7,F2 (cup)
+2,K1 (shoe),7,E3 (water bottle),5,M1 (plate)
+3,D2 (potted plant),7,K3 (shoe),6,G2 (phone)
+1,K2 (shoe),3,H3 (computer mouse),4,G4 (phone)
+5,H1 (computer mouse),3,E3 (water bottle),7,A4 (book)

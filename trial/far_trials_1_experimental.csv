@@ -1,0 +1,11 @@
+target position,target object,distractor object position 1,distractor object 1,distractor object position 2,distractor object 2
+1,K2 (shoe),3,B1 (bag),5,C1 (clock)
+6,C3 (clock),7,I1 (laptop),5,B2 (bag)
+2,K3 (shoe),5,B3 (bag),4,B1 (bag)
+7,C3 (clock),3,K3 (shoe),6,K2 (shoe)
+3,I2 (laptop),4,C4 (clock),1,B1 (bag)
+2,C4 (clock),3,K1 (shoe),6,B2 (bag)
+4,B1 (bag),6,C3 (clock),2,S1 (keyboard)
+5,B2 (bag),4,K3 (shoe),3,I2 (laptop)
+1,K2 (shoe),5,C4 (clock),2,S1 (keyboard)
+6,K2 (shoe),5,B3 (bag),2,C3 (clock)
