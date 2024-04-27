@@ -42,7 +42,7 @@ if platform.machine() == "aarch64":
 # Example usage:
 sound_system = Sound_System()
 times = ["ten-thirty","eleven-oclock","eleven-thirty","twelve-oclock","twelve-thirty","one-oclock", "one-thirty"]
-file_name = 'close_trials_1_experimental.csv'
+file_name = 'close_trials_1_control.csv'
 file_split = file_name.split("_")
 df = pd.read_csv(file_name)
 
