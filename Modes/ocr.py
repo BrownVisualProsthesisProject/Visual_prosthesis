@@ -263,6 +263,33 @@ colors = [
 	(64, 64, 64),    # Dark Gray
 ]
 
+def correct_skew(image):
+    # convert to grayscale
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    # blur the image slightly to reduce high-frequency noise
+    blur = cv2.GaussianBlur(gray, (9, 9), 0)
+    # detect edges in the image
+    edges = cv2.Canny(blur, 50, 150, apertureSize=3)
+    # use hough transform to detect lines
+    lines = cv2.HoughLines(edges, 1, np.pi / 180, 100)
+    if lines is not None:
+        angles = []
+        for rho, theta in lines[:, 0]:
+            # convert from radians to degrees and adjust
+            angle = (theta * 180 / np.pi) - 90
+            angles.append(angle)
+
+        # compute the median angle of all detected lines
+        median_angle = np.median(angles)
+        # rotate the image around its center
+        (h, w) = image.shape[:2]
+        center = (w // 2, h // 2)
+        M = cv2.getRotationMatrix2D(center, median_angle, 1.0)
+        rotated = cv2.warpAffine(image, M, (w, h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
+        return rotated
+    return image
+
+
 def is_half_numbers(sentence):
 	total_chars = len(sentence)
 	num_chars = sum(1 for char in sentence if char.isdigit())
@@ -386,7 +413,12 @@ if __name__ == "__main__":
 			frameRgb = q.get().getCvFrame()
 
 			if os.path.exists("./Modes/dummy.bin"):
-				results_top = reader.readtext(frameRgb, width_ths=5, text_threshold=.7)
+				# Correct skew in the image
+				corrected_image = correct_skew(frameRgb)
+				# Process the image using EasyOCR
+				results_top = reader.readtext(corrected_image, slope_ths=.5, width_ths=5, text_threshold=.7)
+				
+				# results_top = reader.readtext(frameRgb, width_ths=5, text_threshold=.7)
 				# Combine the text of the bounding boxes to create one paragraph
 				combined_text = ""
 				for (bbox, text, prob) in results_top:
@@ -441,10 +473,11 @@ if __name__ == "__main__":
 						continue
 					sentences.append(sentence)
 				os.remove("./Modes/dummy.bin")
-				cv2.imshow("res", cv2.resize(frameRgb, (0, 0), fx=.7, fy=.7))
+				# cv2.imshow("res", cv2.resize(frameRgb, (0, 0), fx=.7, fy=.7))
+				cv2.imshow("res", cv2.resize(corrected_image, (0, 0), fx=.7, fy=.7))
 				
 				send_json(locate_socket, sentences)
-			cv2.imshow("framergb", cv2.resize(frameRgb, (0, 0), fx=.7, fy=.7))
+			cv2.imshow("framergb", cv2.resize(corrected_image, (0, 0), fx=.7, fy=.7))
 
 			#speech = result_queue.get() 
 			#closest_match = find_closest_match(speech, objects)
