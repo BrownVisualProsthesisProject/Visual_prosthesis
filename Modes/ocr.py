@@ -452,5 +452,3 @@ if __name__ == "__main__":
 			key = cv2.waitKey(1)
 			if key == ord('q'):
 				break
-			elif key == ord('c'):
-				send_json(locate_socket, sentences)

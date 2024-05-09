@@ -197,14 +197,14 @@ def voice_control_mode(voice_mode):
 				#closest_match = find_closest_match(speech, objects_list)
 				
 				
-				if voice_mode == 1:
-					speech = result_queue.get() 
-					closest_match = find_closest_match(speech, objects_list)
-				else:
-					speech = input("next/stop/: ")
+				#if voice_mode == 1:
+				#	speech = result_queue.get() 
+				#	closest_match = find_closest_match(speech, objects_list)
+				#else:
+				#	speech = input("next/stop/: ")
 
-				if speech=="stop" or speech == "s": 
-					break
+				#if speech=="stop" or speech == "s": 
+				#	break
 				
 
 			power_gpio()
