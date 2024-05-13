@@ -408,7 +408,8 @@ if __name__ == "__main__":
 		#HFOV = np.deg2rad(90.0)
 		frame_count = 0
 		start_time = time.time()
-
+		
+		corrected_image = None
 		while True:
 			frameRgb = q.get().getCvFrame()
 
@@ -477,6 +478,9 @@ if __name__ == "__main__":
 				cv2.imshow("res", cv2.resize(corrected_image, (0, 0), fx=.7, fy=.7))
 				
 				send_json(locate_socket, sentences)
+			else:
+				corrected_image = frameRgb  # Use the original image if condition is not met
+
 			cv2.imshow("framergb", cv2.resize(corrected_image, (0, 0), fx=.7, fy=.7))
 
 			#speech = result_queue.get() 
