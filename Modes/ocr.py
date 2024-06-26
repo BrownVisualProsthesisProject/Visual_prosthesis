@@ -319,10 +319,11 @@ def group_overlapping_bboxes(bboxes):
 	return groups
 
 
-def send_json(locate_socket, sentences):
+def send_json(locate_socket, sentences, close):
 	"""Sends json data for sound system."""
 	messagedata = {
 			"sentences": sentences,
+			"close": close
 		}
 
 	obj = json.dumps(messagedata)
@@ -381,11 +382,12 @@ if __name__ == "__main__":
 		#HFOV = np.deg2rad(90.0)
 		frame_count = 0
 		start_time = time.time()
+		aux = False
 
 		while True:
 			frameRgb = q.get().getCvFrame()
 
-			if os.path.exists("./Modes/dummy.bin"):
+			if aux:
 				results_top = reader.readtext(frameRgb, width_ths=5, text_threshold=.7)
 				# Combine the text of the bounding boxes to create one paragraph
 				combined_text = ""
@@ -437,13 +439,15 @@ if __name__ == "__main__":
 					delimiter = " "  # You can choose any delimiter you want
 					sentence = delimiter.join(recatangle_group.text for recatangle_group in bbox_groups[group])
 					print(sentence)
-					if not any(char.isspace() for char in sentence):
-						continue
+					#if not any(char.isspace() for char in sentence):
+					#	continue
 					sentences.append(sentence)
-				os.remove("./Modes/dummy.bin")
+				#os.remove("./Modes/dummy.bin")
 				cv2.imshow("res", cv2.resize(frameRgb, (0, 0), fx=.7, fy=.7))
-				
-				send_json(locate_socket, sentences)
+				print("ocr sentences",sentences)
+				send_json(locate_socket, sentences, False)
+				aux = False
+
 			cv2.imshow("framergb", cv2.resize(frameRgb, (0, 0), fx=.7, fy=.7))
 
 			#speech = result_queue.get() 
@@ -451,4 +455,7 @@ if __name__ == "__main__":
 			#print(closest_match)
 			key = cv2.waitKey(1)
 			if key == ord('q'):
+				send_json(locate_socket, [], True)
 				break
+			if key == ord('t'):
+				aux = True

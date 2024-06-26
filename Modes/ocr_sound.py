@@ -144,23 +144,12 @@ def voice_control_mode(voice_mode):
 		GPIO.setmode(GPIO.BOARD)
 		GPIO.setup(CHANNEL, GPIO.OUT)
 	while True:
-
-		if voice_mode == 1:
-			speech = result_queue.get() 
-			objects_list = ['take photo','close']
-			closest_match = find_closest_match(speech, objects_list)
-			print(closest_match)
-		else:
-			closest_match = input("label/list/find: ")
-
-		print(closest_match)
-		
-		if not closest_match: 
-			continue
-		if len(closest_match)>12:
-			continue
-
-		if closest_match == "close":
+		message = imagehub.recv_msg(timeout=300.0)
+		obj = json.loads(message)
+		sentences = obj["sentences"]
+		closest_match = obj["close"]
+		print("sentences",sentences)
+		if closest_match:
 			system.say_sentence("finishing")
 			time.sleep(1.5)
 			global stop_flag
@@ -176,23 +165,19 @@ def voice_control_mode(voice_mode):
 		
 		print("=====",closest_match)
 
-		if closest_match == 'take photo' or closest_match == "t":
-			create_dummy_file("./Modes/dummy.bin")
-			wait_until_file_not_exists("./Modes/dummy.bin")
-			message = imagehub.recv_msg()
-			obj = json.loads(message)
-			sentences = obj["sentences"]
-			print("sentences",sentences)
-			objects_list = ['next','stop']
-			for sentence in sentences:
-				# Pause for 2 seconds before speaking each sentence
-				pygame.time.wait(10)
-				npa, sample_rate = classifier(sentence) 
-				npa = np.repeat(npa.reshape(len(npa), 1), 2, axis = 1)
-				# Play the audio
-				sound = pygame.sndarray.make_sound(npa)
-				sound.play()
-				pygame.time.wait(int(sound.get_length() * 1000))
+		#if closest_match == 'take photo' or closest_match == "t":
+			#create_dummy_file("./Modes/dummy.bin")
+			#wait_until_file_not_exists("./Modes/dummy.bin")
+		
+		for sentence in sentences:
+			# Pause for 2 seconds before speaking each sentence
+			pygame.time.wait(10)
+			npa, sample_rate = classifier(sentence) 
+			npa = np.repeat(npa.reshape(len(npa), 1), 2, axis = 1)
+			# Play the audio
+			sound = pygame.sndarray.make_sound(npa)
+			sound.play()
+			pygame.time.wait(int(sound.get_length() * 1000))
 				#speech = result_queue.get() 
 				#closest_match = find_closest_match(speech, objects_list)
 				
@@ -207,7 +192,7 @@ def voice_control_mode(voice_mode):
 				#	break
 				
 
-			power_gpio()
+		power_gpio()
 
 
 def power_gpio():
