@@ -171,7 +171,7 @@ def voice_control_mode(voice_mode):
 		
 		for sentence in sentences:
 			# Pause for 2 seconds before speaking each sentence
-			pygame.time.wait(10)
+			pygame.time.wait(5)
 			npa, sample_rate = classifier(sentence) 
 			npa = np.repeat(npa.reshape(len(npa), 1), 2, axis = 1)
 			# Play the audio

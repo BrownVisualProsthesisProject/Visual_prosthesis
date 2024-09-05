@@ -12,13 +12,16 @@ import zmq
 import depthai as dai
 import time 
 import os
-
+import requests
 import pygame
 import cv2
 from easyocr import Reader
 import numpy as np
 from tts import load_model
 from ocr_utils.rectangle import BoundingBox
+
+
+url = "http://localhost:11434/api/chat"
 
 colors = [
 	(255, 0, 0),    # Red
@@ -344,7 +347,7 @@ if __name__ == "__main__":
 	fps = 12
 	# The disparity is computed at this resolution, then upscaled to RGB resolution
 	rgbResolution = dai.ColorCameraProperties.SensorResolution.THE_1080_P
-
+	
 	# Create pipeline
 	pipeline = dai.Pipeline()
 	
@@ -352,8 +355,9 @@ if __name__ == "__main__":
 
 	# Define source and output
 	camRgb = pipeline.create(dai.node.ColorCamera)
-	camRgb.setFps(30)
-	camRgb.setResolution(dai.ColorCameraProperties.SensorResolution.THE_12_MP)
+	camRgb.initialControl.AutoFocusMode(dai.RawCameraControl.AutoFocusMode.AUTO)
+	camRgb.setFps(60)
+	camRgb.setResolution(dai.ColorCameraProperties.SensorResolution.THE_4_K)
 
 	controlIn = pipeline.create(dai.node.XLinkIn)
 	controlIn.setStreamName('control')
@@ -362,7 +366,7 @@ if __name__ == "__main__":
 	xout = pipeline.create(dai.node.XLinkOut)
 	xout.setStreamName("out")
 	camRgb.isp.link(xout.input)
-	camRgb.setIspScale(1,2)
+	camRgb.setIspScale(5,8)
 
 	counter = 0
 	# Initialize Pygame
@@ -371,6 +375,8 @@ if __name__ == "__main__":
 	pygame.mixer.init(16000, -16, 2)
 
 	# Initialize EasyOCR reader
+	import PIL
+	PIL.Image.ANTIALIAS = PIL.Image.LANCZOS
 	reader = Reader(['en'], recog_network="english_g2")
 	# Initialize TTS
 	classifier = load_model()
@@ -388,7 +394,7 @@ if __name__ == "__main__":
 			frameRgb = q.get().getCvFrame()
 
 			if aux:
-				results_top = reader.readtext(frameRgb, width_ths=5, text_threshold=.7)
+				results_top = reader.readtext(frameRgb, decoder="beamsearch", beamWidth=5, text_threshold=.7, slope_ths=1, width_ths = 1, add_margin = .05, height_ths = 1)
 				# Combine the text of the bounding boxes to create one paragraph
 				combined_text = ""
 				for (bbox, text, prob) in results_top:
@@ -433,19 +439,33 @@ if __name__ == "__main__":
 				# Display the image with bounding boxes
 				
 
-				sentences = []
 				
+				sentences = "Give me a short clean simple summary: "
 				for group in bbox_groups:
-					delimiter = " "  # You can choose any delimiter you want
+					delimiter = ","  # You can choose any delimiter you want
 					sentence = delimiter.join(recatangle_group.text for recatangle_group in bbox_groups[group])
-					print(sentence)
 					#if not any(char.isspace() for char in sentence):
 					#	continue
-					sentences.append(sentence)
+					sentences+=sentence
 				#os.remove("./Modes/dummy.bin")
 				cv2.imshow("res", cv2.resize(frameRgb, (0, 0), fx=.7, fy=.7))
-				print("ocr sentences",sentences)
-				send_json(locate_socket, sentences, False)
+				print("SENTENESS",sentences)
+				data = {
+					"model": "phi3",
+					"messages": [
+						{"role": "user", "content": sentences}
+					],
+					"stream": False
+				}
+				response = requests.post(url, json=data)
+
+				print(response)
+
+				if response.status_code == 200:
+					print("Response:", response.json()["message"]['content'])
+				else:
+					print("Failed to get a valid response. Status code:", response.status_code)
+				send_json(locate_socket, [response.json()["message"]['content']], False)
 				aux = False
 
 			cv2.imshow("framergb", cv2.resize(frameRgb, (0, 0), fx=.7, fy=.7))

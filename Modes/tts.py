@@ -69,8 +69,9 @@ class Piper:
         phoneme_ids: List[int] = []
 
         for phoneme in phonemes:
-            phoneme_ids.extend(self.config.phoneme_id_map[phoneme])
-            phoneme_ids.extend(self.config.phoneme_id_map[_PAD])
+            if phoneme in self.config.phoneme_id_map:
+                phoneme_ids.extend(self.config.phoneme_id_map[phoneme])
+                phoneme_ids.extend(self.config.phoneme_id_map[_PAD])
 
         phoneme_ids.extend(self.config.phoneme_id_map[_EOS])
 
