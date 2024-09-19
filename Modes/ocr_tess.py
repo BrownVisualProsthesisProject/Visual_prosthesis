@@ -25,7 +25,7 @@ import re
 from PIL import Image
 from datetime import datetime
 
-url = "http://localhost:11434/api/chat"
+url = "http://localhost:11434/api/generate"
 
 def split_long_numbers(text):
     # Function to split long numbers into groups of 2 or 3
@@ -120,9 +120,10 @@ def group_overlapping_bboxes(bboxes):
     return groups
 
 
-def send_json(locate_socket, sentences, close):
+def send_json(locate_socket, sentences, ocr, close):
     """Sends json data for sound system."""
     messagedata = {
+            "raw_ocr": ocr,
             "sentences": sentences,
             "close": close
         }
@@ -179,7 +180,13 @@ if __name__ == "__main__":
     # Initialize TTS
     classifier = load_model()
 
-        # Connect to device and start pipeline
+    #warm llm
+    data = {
+            "model": "mistral-small",
+        }
+    response = requests.post(url, json=data)
+
+    # Connect to device and start pipeline
     with dai.Device(pipeline) as device:
         q = device.getOutputQueue(name="out")
 
@@ -197,32 +204,26 @@ if __name__ == "__main__":
 
                 # Perform OCR on the image using tesserocr
                 text = tesserocr.image_to_text(image_pil)
-                sentences = "write an ultra short details summary paragraph: "
+                sentences = "summarize this english text, include key details: "
                 sentences+=text
                 #os.remove("./Modes/dummy.bin")
-                cv2.imshow("res", cv2.resize(frameRgb, (0, 0), fx=.7, fy=.7))
-                print("SENTENESS:) ",sentences)
+                
                 data = {
-                    "model": "openchat",
-                    "messages": [
-                        {"role": "user", "content": sentences}
-                    ],
+                    "model": "mistral-small",
+                    "prompt": sentences,
                     "stream": False
                 }
+
+               
                 response = requests.post(url, json=data)
-
-                print(response)
-                ans = replace_dates(response.json()["message"]['content'])
-                response_split = re.split(r'\. |\n', ans)
-
-                # If you want to remove any empty strings from the result
-                response_split = [s.strip() for s in response_split if s]
+                print("COR output:", sentences)
+                cv2.imshow("res", cv2.resize(frameRgb, (0, 0), fx=.7, fy=.7))
 
                 if response.status_code == 200:
-                    print("Response:", response.json()["message"]['content'])
+                    print("Response:", response.json()["response"])
                 else:
                     print("Failed to get a valid response. Status code:", response.status_code)
-                send_json(locate_socket, response_split, False)
+                send_json(locate_socket, response.json()["response"], sentences, False)
                 aux = False
 
             cv2.imshow("framergb", cv2.resize(frameRgb, (0, 0), fx=.7, fy=.7))
@@ -232,7 +233,7 @@ if __name__ == "__main__":
             #print(closest_match)
             key = cv2.waitKey(1)
             if key == ord('q'):
-                send_json(locate_socket, [], True)
+                send_json(locate_socket, [], [], True)
                 break
             if key == ord('t'):
                 aux = True

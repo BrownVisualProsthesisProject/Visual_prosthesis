@@ -24,7 +24,7 @@ class CustomRecognizer(sr.Recognizer):
 		self.mean_sum = 0
 		self.rms_flag = True
 
-	def listen(self, source, phrase_time_limit=2):
+	def listen(self, source, phrase_time_limit=10):
 		"""
 		Records a single phrase from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance, which it returns.
 

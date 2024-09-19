@@ -1,0 +1,58 @@
+alphanumeric key t pressed
+SENTENESS:)  summarize this english text, include key details: IID: MGTL
+Billo: 212 a01-9999 999
+
+Bill Date: May 15, 2001
+
+Total amount due $1 280.73
+Payment is due on June 26, 2001
+
+Aimourit enclased|$ fo
+
+Please make your check payable to ‘Yerizon
+and write your account number
+
+ABC COMPANY INC. A53 on check.
+1234 MAIN STREET
+CITY ST A32
+55555-4444
+VERIZON
+A53 29 P OBOX 15124
+
+ALBANY NY 12212-5124
+
+oooocoooCoo0oC000000000000 oooodo000000000000000000000000000000000
+
+Please detach and return the above with Your payment. Thank
+
+youfor your payment bymail. See your phone book for
+conespondence addresses and Payment locations. If paying i
+
+Nn person bring this entire Page with you,
+Account number 242 Q01-9999 999
+Billing date May 15, 2001
+
+Summary at arcnimt
+
+<Response [200]>
+Response: A bill is issued for account no. 212 a01-9999 999 with the total amount due being $1,280.73, dating from May 15, 2001. The payment deadline has been set as June 26, 2001. To make a payment, checks should be made payable to 'Yerizon'. Along with the check, please write down your account number and ABC Company Inc.'s address: 1234 Main Street, City St A32, New York, NY 55555-4444. The payment can also be sent through mail or delivered personally; if doing so, ensure to bring the entire page with you which includes account number 242 Q01-9999 999 and billing date May 15, 2001 for reference.
+sentences ['A bill is issued for account no', '212 a01-9999 999 with the total amount due being $1,280.73, dating from May 15, 2001', 'The payment deadline has been set as June 26, 2001', "To make a payment, checks should be made payable to 'Yerizon'", "Along with the check, please write down your account number and ABC Company Inc.'s address: 1234 Main Street, City St A32, New York, NY 55555-4444", 'The payment can also be sent through mail or delivered personally; if doing so, ensure to bring the entire page with you which includes account number 242 Q01-9999 999 and billing date May 15, 2001 for reference.']
+===== False
+alphanumeric key t pressed
+SENTENESS:)  summarize this english text, include key details: 
+<Response [200]>
+Response: This English text provides an overview of the novel "Pride and Prejudice" by Jane Austen. It is a classic romance that explores themes of love, marriage, class, and reputation in 19th-century England through the experiences of the Bennet family, particularly Elizabeth Bennet's tumultuous relationship with Mr. Darcy.
+sentences ['This English text provides an overview of the novel "Pride and Prejudice" by Jane Austen', "It is a classic romance that explores themes of love, marriage, class, and reputation in 19th-century England through the experiences of the Bennet family, particularly Elizabeth Bennet's tumultuous relationship with Mr", 'Darcy.']
+===== False
+
+
+alphanumeric key t pressed
+special key Key.enter pressed
+special key Key.ctrl pressed
+alphanumeric key v pressed
+special key Key.ctrl pressed
+alphanumeric key s pressed
+alphanumeric key t pressed
+Error in boxClipToRectangle: box outside rectangle
+Error in pixScanForForeground: invalid box
+^[[2~special key Key.insert pressed
