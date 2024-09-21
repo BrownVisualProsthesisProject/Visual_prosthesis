@@ -5,6 +5,7 @@ import argparse
 import json
 import time
 import string
+import datetime
 # Local modules.
 from message_stream import MessageStreamSubscriberEvent
 from sound_system import Sound_System
@@ -20,7 +21,7 @@ from utils.custom_recognizer import CustomRecognizer
 import platform
 import re
 import requests
-
+import ollama
 import pygame
 import numpy as np
 from tts import load_model
@@ -64,9 +65,9 @@ def replace_dates(text):
         if '/' in date_str:
             try:
                 if len(date_str.split('/')) == 3:  # mm/dd/yyyy
-                    date_obj = datetime.strptime(date_str, "%m/%d/%Y")
+                    date_obj = datetime.datetime.strptime(date_str, "%m/%d/%Y")
                 elif len(date_str.split('/')) == 2:  # mm/yyyy
-                    date_obj = datetime.strptime(date_str, "%m/%Y")
+                    date_obj = datetime.datetime.strptime(date_str, "%m/%Y")
                 return date_obj.strftime("%B")
             except ValueError:
                 return date_str  # Return the original string if there's a ValueError
@@ -141,13 +142,46 @@ def transcribe_forever(audio_queue, result_queue, audio_model):
             print(f"Error during transcription: {e}")
             continue
 def play_sentence(sentence, classifier):
+    if sentence == "":
+        return 
     npa, sample_rate = classifier(sentence)
     npa = np.repeat(npa.reshape(len(npa), 1), 2, axis=1)
     # Play the audio
     sound = pygame.sndarray.make_sound(npa)
     sound.play()
     pygame.time.wait(int(sound.get_length() * 1000))
-    pygame.time.wait(5)  # Wait for 5 seconds
+
+def generate_and_process_response(model, prompt, classifier, question):
+    response = ollama.generate(model=model, prompt=prompt, stream=True)
+
+    # Accumulate tokens to form sentences
+    current_sentence = ""
+    complete_response = ""
+
+    for chunk in response:
+        content = chunk['response']
+        current_sentence += content  # Append tokens to form the sentence
+        print(content)
+
+        # Check if the current chunk ends with sentence-ending punctuation
+        if not question:
+            if any(content.endswith(punct) for punct in ['. ', "\n"]):
+                current_sentence = replace_dates(current_sentence).strip().replace('**', '').replace('*', '')
+                print(current_sentence)
+                play_sentence(current_sentence, classifier)
+                complete_response += current_sentence + " "
+                current_sentence = ""  # Reset for the next sentence
+        else:
+            if any(content.endswith(punct) for punct in ['.','\n']):
+                current_sentence = replace_dates(current_sentence).strip().replace('**', '')
+                print(current_sentence)
+                play_sentence(current_sentence, classifier)
+                complete_response += current_sentence + " "
+                current_sentence = ""  # Reset for the next sentence
+
+
+    print(complete_response)
+    return complete_response
 
 def voice_control_mode(voice_mode):
     global stop_flag
@@ -198,10 +232,8 @@ def voice_control_mode(voice_mode):
         while True:
             message = imagehub.recv_msg(timeout=300.0)
             obj = json.loads(message)
-            sentences = obj["sentences"]
             raw_ocr = obj["raw_ocr"]
             closest_match = obj["close"]
-            print("sentences", sentences)
             if closest_match:
                 system.say_sentence("finishing")
                 time.sleep(1.5)
@@ -214,17 +246,19 @@ def voice_control_mode(voice_mode):
                     GPIO.cleanup()
                 break
 
-            print("=====", closest_match)
+            sentences = "summarize this english text, include key details: "
+            sentences+=raw_ocr
+            print("RAW OCR:", sentences)
+            data = {
+                    "model": "mistral-small",
+                    "prompt": sentences,
+                    "stream": False
+                }
 
-            # Process the sentences
-            ans = replace_dates(sentences)
-            response_split = re.split(r'\. |\n', ans)
+            
+            #response = requests.post(url, json=data)
 
-            # If you want to remove any empty strings from the result
-            sentences = [s.strip().replace('**', '') for s in response_split if s]
-            for sentence in sentences:
-                # Pause for 2 seconds before speaking each sentence
-                play_sentence(sentence,classifier)
+            complete_response = generate_and_process_response('mistral-small', sentences, classifier, False)
 
             # After iterating over sentences, enter a loop to interact with the user until they say "no"
             while True:
@@ -260,61 +294,18 @@ def voice_control_mode(voice_mode):
 
                 if standardized_response == "":
                     # The user said "no" (or variations of "no")
-                    pass  # You can also break the loop here if desired
+                    play_sentence("finishing", classifier)
                     break
                 elif user_response:
                     # Print the transcribed speech
-                    
-                    # Prepare the data for the API request
-                    print("User said:", user_response)
 
                     # Ensure raw_ocr and ans are defined; you can adjust these variables as needed
                     sentences = f"answer this: {user_response} according to this text: {raw_ocr}"
-                    print("User said:", sentences)
-                    ans = ""  # Initialize 'ans' as an empty string or as per your context
-                    
-                    """data = {
-                        "model": "mistral-small",
-                        "messages": [
-                            {"role": "user", "content": raw_ocr},
-                            {"role": "assistant", "content": ans},
-                            {"role": "user", "content": user_response}
-                        ],
-                        "stream": False
-                    }"""
+                    complete_response = generate_and_process_response('mistral-small', sentences, classifier, True)
 
-                    data = {
-                    "model": "mistral-small",
-                    "prompt": sentences,
-                    "stream": False
-                    }
-
-                    # Send the request to the API endpoint
-                    try:
-                        response = requests.post(url,json=data)
-
-                        # Get the response data
-                        response_data = response.json()
-
-                        # Process the sentences
-                        ans = replace_dates(response_data['response']).replace('**', '')
-                        assistant_reply = re.split(r'\. |\n', ans)
-                        # Print the assistant's reply
-                        print("Assistant replied:", assistant_reply)
-
-                        # Synthesize and play the assistant's reply
-                        for sentence in assistant_reply:
-                            play_sentence(sentence, classifier)
-
-                        # Update 'ans' with the assistant's reply for the next iteration
-                        #ans = assistant_reply
-
-                    except requests.exceptions.RequestException as e:
-                        print(f"Request failed: {e}")
-                        # Optionally, inform the user
-                        system.say_sentence("Sorry, I couldn't get an answer to your question.")
                 else:
                     print("No response detected.")
+                    
                     # Optionally, break the loop if no response is detected
                     break
 

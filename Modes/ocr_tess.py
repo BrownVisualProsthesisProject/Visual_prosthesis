@@ -25,7 +25,7 @@ import re
 from PIL import Image
 from datetime import datetime
 
-url = "http://localhost:11434/api/generate"
+os.environ['TESSDATA_PREFIX'] = "/usr/share/tesseract-ocr/5/tessdata/"
 
 def split_long_numbers(text):
     # Function to split long numbers into groups of 2 or 3
@@ -120,11 +120,10 @@ def group_overlapping_bboxes(bboxes):
     return groups
 
 
-def send_json(locate_socket, sentences, ocr, close):
+def send_json(locate_socket, ocr, close):
     """Sends json data for sound system."""
     messagedata = {
             "raw_ocr": ocr,
-            "sentences": sentences,
             "close": close
         }
 
@@ -184,7 +183,10 @@ if __name__ == "__main__":
     data = {
             "model": "mistral-small",
         }
-    response = requests.post(url, json=data)
+    try:
+        response = requests.post(url, json=data, timeout=1)  # Set timeout to 1 second
+    except:
+        print("LLM loaded")
 
     # Connect to device and start pipeline
     with dai.Device(pipeline) as device:
@@ -203,27 +205,14 @@ if __name__ == "__main__":
                 image_pil = Image.fromarray(frameRgb)
 
                 # Perform OCR on the image using tesserocr
-                text = tesserocr.image_to_text(image_pil)
-                sentences = "summarize this english text, include key details: "
-                sentences+=text
+                ocr_text = tesserocr.image_to_text(image_pil)
                 #os.remove("./Modes/dummy.bin")
                 
-                data = {
-                    "model": "mistral-small",
-                    "prompt": sentences,
-                    "stream": False
-                }
-
-               
-                response = requests.post(url, json=data)
-                print("COR output:", sentences)
+                
+                
                 cv2.imshow("res", cv2.resize(frameRgb, (0, 0), fx=.7, fy=.7))
 
-                if response.status_code == 200:
-                    print("Response:", response.json()["response"])
-                else:
-                    print("Failed to get a valid response. Status code:", response.status_code)
-                send_json(locate_socket, response.json()["response"], sentences, False)
+                send_json(locate_socket, ocr_text , False)
                 aux = False
 
             cv2.imshow("framergb", cv2.resize(frameRgb, (0, 0), fx=.7, fy=.7))
@@ -233,7 +222,7 @@ if __name__ == "__main__":
             #print(closest_match)
             key = cv2.waitKey(1)
             if key == ord('q'):
-                send_json(locate_socket, [], [], True)
+                send_json(locate_socket, [], True)
                 break
             if key == ord('t'):
                 aux = True
