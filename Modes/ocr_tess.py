@@ -211,7 +211,9 @@ if __name__ == "__main__":
                 
                 
                 cv2.imshow("res", cv2.resize(frameRgb, (0, 0), fx=.7, fy=.7))
-
+                #timestamp = int(time.time())  # Get the current time in seconds
+                #filename = f'output_image_{timestamp}.jpg'
+                #cv2.imwrite(filename, frameRgb)
                 send_json(locate_socket, ocr_text , False)
                 aux = False
 

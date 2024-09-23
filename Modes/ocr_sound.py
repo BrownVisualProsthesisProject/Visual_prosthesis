@@ -25,6 +25,7 @@ import ollama
 import pygame
 import numpy as np
 from tts import load_model
+import csv
 
 if platform.machine() == "aarch64":
     import Jetson.GPIO as GPIO
@@ -151,6 +152,16 @@ def play_sentence(sentence, classifier):
     sound.play()
     pygame.time.wait(int(sound.get_length() * 1000))
 
+def write_to_csv(filename, sentences, phi3_response, mistral_response):
+    # Open the CSV file in append mode ('a')
+    with open(filename, mode='a', newline='') as file:
+        writer = csv.writer(file)
+        # Write the header only if the file is empty
+        if file.tell() == 0:
+            writer.writerow(["Prompt", "phi3 Response", "mistral-small Response"])
+        # Write the sentences and the complete responses as a new row
+        writer.writerow([sentences, phi3_response, mistral_response])
+
 def generate_and_process_response(model, prompt, classifier, question):
     response = ollama.generate(model=model, prompt=prompt, stream=True)
 
@@ -172,16 +183,25 @@ def generate_and_process_response(model, prompt, classifier, question):
                 complete_response += current_sentence + " "
                 current_sentence = ""  # Reset for the next sentence
         else:
-            if any(content.endswith(punct) for punct in ['.','\n']):
+            if any(content.endswith(punct) for punct in ['.', '\n']):
                 current_sentence = replace_dates(current_sentence).strip().replace('**', '')
                 print(current_sentence)
                 play_sentence(current_sentence, classifier)
-                complete_response += current_sentence + " "
+                complete_response += current_sentence + "\n"
                 current_sentence = ""  # Reset for the next sentence
-
 
     print(complete_response)
     return complete_response
+
+def generate_responses_for_both_models(prompt, classifier, csv_filename):
+    # Generate the response using the mistral-small model
+    mistral_response = generate_and_process_response('mistral-small', prompt, classifier, False)
+
+    # Generate the response using the phi3 model
+    phi3_response = generate_and_process_response('phi3', prompt, classifier, False)
+
+    # Write the prompt, phi3 response, and mistral-small response to the CSV file
+    write_to_csv(csv_filename, prompt, phi3_response, mistral_response)
 
 def voice_control_mode(voice_mode):
     global stop_flag
@@ -246,20 +266,21 @@ def voice_control_mode(voice_mode):
                     GPIO.cleanup()
                 break
 
-            sentences = "summarize this english text, include key details: "
-            sentences+=raw_ocr
-            print("RAW OCR:", sentences)
+            prompt = "summarize this english text, include key details: "
+            prompt+=raw_ocr
+            print("RAW OCR:", prompt)
             data = {
                     "model": "mistral-small",
-                    "prompt": sentences,
+                    "prompt": prompt,
                     "stream": False
                 }
 
             
             #response = requests.post(url, json=data)
 
-            complete_response = generate_and_process_response('mistral-small', sentences, classifier, False)
-
+            
+            #complete_response = generate_responses_for_both_models(sentences, classifier, "comparison.csv")
+            generate_and_process_response('mistral-small', prompt, classifier, False)
             # After iterating over sentences, enter a loop to interact with the user until they say "no"
             while True:
                 play_sentence("Do you have a question?", classifier)
@@ -294,14 +315,15 @@ def voice_control_mode(voice_mode):
 
                 if standardized_response == "":
                     # The user said "no" (or variations of "no")
-                    play_sentence("finishing", classifier)
+                    play_sentence("stopping language model", classifier)
                     break
                 elif user_response:
                     # Print the transcribed speech
 
                     # Ensure raw_ocr and ans are defined; you can adjust these variables as needed
-                    sentences = f"answer this: {user_response} according to this text: {raw_ocr}"
-                    complete_response = generate_and_process_response('mistral-small', sentences, classifier, True)
+                    prompt = f"answer this: {user_response} according to this text: {raw_ocr}"
+                    generate_and_process_response('mistral-small', prompt, classifier, True)
+                    #complete_response = generate_responses_for_both_models(sentences, classifier, "comparison.csv")
 
                 else:
                     print("No response detected.")
