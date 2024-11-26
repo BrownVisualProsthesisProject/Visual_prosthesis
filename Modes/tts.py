@@ -131,14 +131,14 @@ def audio_float_to_int16(
     return audio_norm
 
 def load_model():
-    model = './Modes/en-us-amy-low.onnx'
+    model = './Modes/en_US-amy-medium.onnx'
     speaker_id=None
     voice = Piper(model)
     synthesize = partial(
         voice.synthesize,
         speaker_id=speaker_id,
         length_scale=None, 
-        noise_scale=0.9,
-        noise_w=0.2,)
+        noise_scale=0.2,
+        noise_w=0.1,)
     logging.debug("Model loaded.")
     return  synthesize

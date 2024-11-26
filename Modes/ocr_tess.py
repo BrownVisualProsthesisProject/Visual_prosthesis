@@ -1,26 +1,20 @@
 """Grasping module with Yolov5."""
 
 # Standard modules
-import json
+import msgpack
 
 # Third party modules
 import argparse
 import cv2
-import numpy as np
-import torch
+import base64
 import zmq
 import depthai as dai
 import time 
 import os
-import requests
-import pygame
 import cv2
 #from easyocr import Reader
-import numpy as np
-from tts import load_model
 from ocr_utils.rectangle import BoundingBox
 import tesserocr
-from tesserocr import PSM, OEM
 import re
 from PIL import Image
 from datetime import datetime
@@ -120,15 +114,17 @@ def group_overlapping_bboxes(bboxes):
     return groups
 
 
-def send_json(locate_socket, ocr, close):
-    """Sends json data for sound system."""
+def send_data(locate_socket, ocr, close, qa=False, vlm = False):
+    """Sends data for sound system using MessagePack."""
     messagedata = {
-            "raw_ocr": ocr,
-            "close": close
-        }
+        "raw_ocr": ocr,
+        "close": close,
+        "qa": qa,  # New flag for 'u' option
+        "vlm": vlm
+    }
+    packed_data = msgpack.packb(messagedata)  # More efficient binary format
+    locate_socket.send(packed_data)  # Send binary data
 
-    obj = json.dumps(messagedata)
-    locate_socket.send_string(obj)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -139,22 +135,15 @@ if __name__ == "__main__":
     locate_socket = context.socket(zmq.PUB)
     locate_socket.bind("tcp://127.0.0.1:5559")
 
-    # Optional. If set (True), the ColorCamera is downscaled from 1080p to 720p.
-    # Otherwise (False), the aligned depth is automatically upscaled to 1080p
     downscaleColor = False
     fps = 12
-    # The disparity is computed at this resolution, then upscaled to RGB resolution
     rgbResolution = dai.ColorCameraProperties.SensorResolution.THE_1080_P
-    
-    # Create pipeline
-    pipeline = dai.Pipeline()
-    
-    queueNames = []
 
-    # Define source and output
+    pipeline = dai.Pipeline()
+
     camRgb = pipeline.create(dai.node.ColorCamera)
     camRgb.initialControl.AutoFocusMode(dai.RawCameraControl.AutoFocusMode.AUTO)
-    camRgb.setFps(60)
+    camRgb.setFps(40)
     camRgb.setResolution(dai.ColorCameraProperties.SensorResolution.THE_4_K)
 
     controlIn = pipeline.create(dai.node.XLinkIn)
@@ -164,35 +153,13 @@ if __name__ == "__main__":
     xout = pipeline.create(dai.node.XLinkOut)
     xout.setStreamName("out")
     camRgb.isp.link(xout.input)
-    camRgb.setIspScale(3,4)
+    camRgb.setIspScale(3, 4)
 
-    counter = 0
-    # Initialize Pygame
-    pygame.init()
-    pygame.mixer.quit()
-    pygame.mixer.init(16000, -16, 2)
 
-    # Initialize EasyOCR reader
-    #import PIL
-    #PIL.Image.ANTIALIAS = PIL.Image.LANCZOS
-    #reader = Reader(['en'], recog_network="english_g2")
-    # Initialize TTS
-    classifier = load_model()
 
-    #warm llm
-    data = {
-            "model": "mistral-small",
-        }
-    try:
-        response = requests.post(url, json=data, timeout=1)  # Set timeout to 1 second
-    except:
-        print("LLM loaded")
-
-    # Connect to device and start pipeline
     with dai.Device(pipeline) as device:
-        q = device.getOutputQueue(name="out")
+        q = device.getOutputQueue(name="out", maxSize=1, blocking=False)
 
-        #HFOV = np.deg2rad(90.0)
         frame_count = 0
         start_time = time.time()
         aux = False
@@ -201,30 +168,42 @@ if __name__ == "__main__":
             frameRgb = q.get().getCvFrame()
 
             if aux:
-                # Convert OpenCV image (NumPy array) to PIL image
-                image_pil = Image.fromarray(frameRgb)
+                if  key == ord('i'):
+                    send_data(locate_socket, "test_image.jpg", False, vlm=True)
+                
+                else:
 
-                # Perform OCR on the image using tesserocr
-                ocr_text = tesserocr.image_to_text(image_pil)
-                #os.remove("./Modes/dummy.bin")
-                
-                
-                
-                cv2.imshow("res", cv2.resize(frameRgb, (0, 0), fx=.7, fy=.7))
-                #timestamp = int(time.time())  # Get the current time in seconds
-                #filename = f'output_image_{timestamp}.jpg'
-                #cv2.imwrite(filename, frameRgb)
-                send_json(locate_socket, ocr_text , False)
+                    image_pil = Image.fromarray(frameRgb)
+                    ocr_text = tesserocr.image_to_text(image_pil)
+                    
+                    if key == ord('u'):
+                        send_data(locate_socket, ocr_text, False, qa=True)
+                    else:
+                        send_data(locate_socket, ocr_text, False)
+                        print(ocr_text)
+                cv2.imshow("capture", cv2.resize(frameRgb, (0, 0), fx=.5, fy=.5))
                 aux = False
-
-            cv2.imshow("framergb", cv2.resize(frameRgb, (0, 0), fx=.7, fy=.7))
-
-            #speech = result_queue.get() 
-            #closest_match = find_closest_match(speech, objects)
-            #print(closest_match)
+                
+            cv2.imshow("framergb", cv2.resize(frameRgb, (0, 0), fx=.5, fy=.5))
+            
+            
             key = cv2.waitKey(1)
+
             if key == ord('q'):
-                send_json(locate_socket, [], True)
+                send_data(locate_socket, [], True)
                 break
-            if key == ord('t'):
+
+            if key == ord('t') or key == ord('u') :
                 aux = True
+            
+            if key == ord('i'):
+                cv2.imwrite("test_image.jpg", frameRgb)
+                time.sleep(.5)
+                aux = True
+
+            if key == ord('y'):
+                # Capture and save photo with timestamp-based name
+                timestamp = int(time.time())  # Get current time in seconds
+                filename = f'photo_{timestamp}.jpg'
+                cv2.imwrite(filename, frameRgb)
+                print(f"Photo saved as {filename}")

@@ -72,7 +72,7 @@ class MessageStreamSubscriberEvent:
         socket.subscribe("")
         
         while not self._stop:
-            self._data = socket.recv_string()
+            self._data = socket.recv()
             self._data_ready.set()
         socket.close()
 

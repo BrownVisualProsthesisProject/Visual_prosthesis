@@ -2,7 +2,7 @@
 
 # Standard modules.
 import argparse
-import json
+import msgpack
 import time
 import string
 import datetime
@@ -20,7 +20,6 @@ from Constants import LABELS, INITIAL_PROMPT, CHANNEL
 from utils.custom_recognizer import CustomRecognizer
 import platform
 import re
-import requests
 import ollama
 import pygame
 import numpy as np
@@ -108,7 +107,6 @@ def record_audio(audio_queue, energy, pause, dynamic_energy, listening_event):
         while not stop_flag:
             # Wait until 'listening_event' is set
             listening_event.wait()
-            print("=========seeeet")
             if stop_flag:
                 break
             try:
@@ -129,7 +127,6 @@ def transcribe_forever(audio_queue, result_queue, audio_model):
     audio_model.transcribe(torch.zeros(40000,device="cuda"), language='english')
     while not stop_flag:
         try:
-            print("wirint audio data to trancribe")
             audio_data = audio_queue.get()
             print("got audio data to trancribe")
             result = audio_model.transcribe(
@@ -142,15 +139,54 @@ def transcribe_forever(audio_queue, result_queue, audio_model):
         except Exception as e:
             print(f"Error during transcription: {e}")
             continue
-def play_sentence(sentence, classifier):
+
+import wave
+def play_sentence(sentence, classifier, save_as_wav=False):
     if sentence == "":
         return 
+    
+    # Classify the sentence and get the NumPy array and sample rate
     npa, sample_rate = classifier(sentence)
-    npa = np.repeat(npa.reshape(len(npa), 1), 2, axis=1)
-    # Play the audio
-    sound = pygame.sndarray.make_sound(npa)
+    # Ensure the NumPy array is in the correct shape (two channels, stereo)
+    #npa = np.repeat(npa.reshape(len(npa), 1), 2, axis=1)
+    #npa = npa.reshape(len(npa), 1)
+    
+    # Play the audio using PyGame
+    sound = pygame.sndarray.make_sound(npa.flatten())
     sound.play()
     pygame.time.wait(int(sound.get_length() * 1000))
+    
+    # Optionally, save the sound to a .wav file
+    if save_as_wav:
+        # Initialize PyGame mixer if needed
+        pygame.mixer.init(frequency=sample_rate, size=-16, channels=2)
+        
+        # Generate a simple timestamp in the format YYYYMMDD_HHMMSS
+        timestamp = int(time.time())
+        wav_filename = f"./table/output_{timestamp}.wav"
+        
+        with wave.open(wav_filename, 'w') as sfile:
+            # Set parameters for the wave file (sample rate, stereo, 16-bit)
+            sfile.setframerate(sample_rate)
+            sfile.setnchannels(2)  # Stereo
+            sfile.setsampwidth(2)  # 2 bytes for 16-bit audio
+            
+            # Scale and convert the NumPy array to int16 for 16-bit PCM format
+            # First, normalize the array if it's not already in the correct range
+            max_val = np.max(np.abs(npa))  # Find the max value for normalization
+            if max_val > 0:
+                npa_normalized = npa / max_val  # Normalize to [-1, 1] range
+            else:
+                npa_normalized = npa
+            
+            # Convert the normalized array to int16 PCM format
+            npa_int16 = (npa_normalized * 32767).astype(np.int16)
+            
+            # Write the audio data to the wave file
+            sfile.writeframes(npa_int16.tobytes())
+        
+        print(f"Audio saved as {wav_filename}")
+
 
 def write_to_csv(filename, sentences, phi3_response, mistral_response):
     # Open the CSV file in append mode ('a')
@@ -162,36 +198,46 @@ def write_to_csv(filename, sentences, phi3_response, mistral_response):
         # Write the sentences and the complete responses as a new row
         writer.writerow([sentences, phi3_response, mistral_response])
 
-def generate_and_process_response(model, prompt, classifier, question):
-    response = ollama.generate(model=model, prompt=prompt, stream=True)
 
-    # Accumulate tokens to form sentences
-    current_sentence = ""
-    complete_response = ""
+def format_prices(text):
+    # Format prices in dollar amounts with two decimal places
+    formatted_text = re.sub(r'\$\d+(\.\d{1,2})?', lambda x: f"${float(x.group()):.2f}", text)
+    return formatted_text
 
+def generate_and_process_response(model, prompt, classifier, question, vlm=False):
+
+    if vlm:
+        response = ollama.chat(model=model,
+                messages=[
+                    {"role": "user", "content": "answer this: Is the phone to the left or to the right in the image? ", "images": [prompt]}
+                ], stream=True
+            )
+    else:
+        response = ollama.generate(model=model, prompt=prompt, stream=True)
+    complete_response = []
+    current_sentence = []
+    play = False
+    sentence_endings = ['.', ',', '\n']  # Precompute sentence-ending characters
+
+    # Process response tokens in chunks
     for chunk in response:
-        content = chunk['response']
-        current_sentence += content  # Append tokens to form the sentence
-        print(content)
-
-        # Check if the current chunk ends with sentence-ending punctuation
-        if not question:
-            if any(content.endswith(punct) for punct in ['. ', "\n"]):
-                current_sentence = replace_dates(current_sentence).strip().replace('**', '').replace('*', '')
-                print(current_sentence)
-                play_sentence(current_sentence, classifier)
-                complete_response += current_sentence + " "
-                current_sentence = ""  # Reset for the next sentence
+        if vlm:
+            content = chunk['message']['content']
         else:
-            if any(content.endswith(punct) for punct in ['.', '\n']):
-                current_sentence = replace_dates(current_sentence).strip().replace('**', '')
-                print(current_sentence)
-                play_sentence(current_sentence, classifier)
-                complete_response += current_sentence + "\n"
-                current_sentence = ""  # Reset for the next sentence
+            content = chunk['response']
+        current_sentence.append(content)  # Append tokens to form the sentence
+        
+        # Check if the current chunk ends with sentence-ending punctuation
+        if any(content.endswith(punct) for punct in sentence_endings):
+            sentence = replace_dates("".join(current_sentence)).strip()  # Join parts and replace dates
+            #sentence = convert_prices_in_sentence(sentence)
+            play_sentence(sentence, classifier, save_as_wav=play)
+            complete_response.append(sentence + ("\n" if question else " "))
+            current_sentence = []  # Reset for the next sentence
+            print(sentence)
 
-    print(complete_response)
-    return complete_response
+    return "".join(complete_response)  # Join accumulated responses
+
 
 def generate_responses_for_both_models(prompt, classifier, csv_filename):
     # Generate the response using the mistral-small model
@@ -223,7 +269,7 @@ def voice_control_mode(voice_mode):
     # Initialize Pygame
     pygame.init()
     pygame.mixer.quit()
-    pygame.mixer.init(16000, -16, 2)
+    pygame.mixer.init(22050, -16, 1)
 
     # Initialize TTS
     classifier = load_model()
@@ -250,10 +296,16 @@ def voice_control_mode(voice_mode):
 
     try:
         while True:
-            message = imagehub.recv_msg(timeout=300.0)
-            obj = json.loads(message)
+            message = imagehub.recv_msg(timeout=400.0)
+            # Decode the received binary message using MessagePack
+            obj = msgpack.unpackb(message)
+
+            # Now you can access the fields as before
             raw_ocr = obj["raw_ocr"]
             closest_match = obj["close"]
+            qa_flag = obj.get("qa", False)
+            vlm = obj.get("vlm", False)
+
             if closest_match:
                 system.say_sentence("finishing")
                 time.sleep(1.5)
@@ -265,80 +317,63 @@ def voice_control_mode(voice_mode):
                 if platform.machine() == "aarch64":
                     GPIO.cleanup()
                 break
-
-            prompt = "summarize this english text, include key details: "
-            prompt+=raw_ocr
-            print("RAW OCR:", prompt)
-            data = {
-                    "model": "mistral-small",
-                    "prompt": prompt,
-                    "stream": False
-                }
+            if not vlm:
+                prompt = "in a short sentence, what is this about: "
+                prompt += raw_ocr
+                # Process the response
+                generate_and_process_response('mistral-small', prompt, classifier, False)
+            else:
+                generate_and_process_response('llava:13b', raw_ocr, classifier, False, vlm=True)
 
             
-            #response = requests.post(url, json=data)
 
+            # Check if the qa flag is False, and if so, skip the user interaction part
+            if not qa_flag:
+                print("QA flag is not True, ending method before user interaction loop.")
+                continue  # Exit the method early if qa flag is not True
             
-            #complete_response = generate_responses_for_both_models(sentences, classifier, "comparison.csv")
-            generate_and_process_response('mistral-small', prompt, classifier, False)
             # After iterating over sentences, enter a loop to interact with the user until they say "no"
             while True:
+                time.sleep(3)
                 play_sentence("Do you have a question?", classifier)
                 print("Listening for user's question...")
 
                 if voice_mode == 1:
-                    # Clear any previous audio data
                     with audio_queue.mutex:
                         audio_queue.queue.clear()
                     with result_queue.mutex:
                         result_queue.queue.clear()
 
-                    # Set the listening_event to start recording
                     listening_event.set()
                     print("listening set")
-                    # Get the speech input from the user
+
                     try:
-                        user_response = result_queue.get(timeout=25)  # Wait for up to 15 seconds
+                        user_response = result_queue.get(timeout=30)  # Wait for up to 15 seconds
                     except queue.Empty:
                         user_response = ""
 
-                    # After getting the response, clear the listening_event to stop recording
                     listening_event.clear()
                 else:
                     user_response = input("Do you have a question? ")
 
-                # Standardize the user's response
                 standardized_response = user_response.lower().strip()
-                standardized_response = standardized_response.replace(".", "").replace(",", "")
-                #standardized_response = standardized_response.replace("!", "").replace("?", "")
-                standardized_response = standardized_response.replace("no", "").strip()
-
+                standardized_response = standardized_response.replace(".", "").replace("no", "")
+                print(standardized_response)
                 if standardized_response == "":
-                    # The user said "no" (or variations of "no")
                     play_sentence("stopping language model", classifier)
                     break
                 elif user_response:
-                    # Print the transcribed speech
-
-                    # Ensure raw_ocr and ans are defined; you can adjust these variables as needed
-                    prompt = f"answer this: {user_response} according to this text: {raw_ocr}"
+                    prompt = f"in one sentence answer the question: {user_response} search the answer here: {raw_ocr}"
                     generate_and_process_response('mistral-small', prompt, classifier, True)
-                    #complete_response = generate_responses_for_both_models(sentences, classifier, "comparison.csv")
-
                 else:
                     print("No response detected.")
-                    
-                    # Optionally, break the loop if no response is detected
                     break
 
-                # Continue with any additional logic
                 power_gpio()
 
-
     except KeyboardInterrupt:
-        # Handle any cleanup on interrupt
         stop_flag = True
-        listening_event.set()  # Unblock the threads if they are waiting
+        listening_event.set()
         if voice_mode == 1:
             record_thread.join()
             transcribe_thread.join()
@@ -346,6 +381,8 @@ def voice_control_mode(voice_mode):
         if platform.machine() == "aarch64":
             GPIO.cleanup()
         print("Program terminated by user.")
+
+
 
 def power_gpio():
     if platform.machine() == "aarch64":
