@@ -1,0 +1,245 @@
+   1  docker run hello-world
+    2  sudo chown "$USER":"$USER" /home/"$USER"/.docker -R
+    3  sudo chmod g+rwx "$HOME/.docker" -R
+    4  jetson-containers run --workdir=/opt/llama.cpp/bin $(autotag llama_cpp:gguf)   /bin/bash -c './llava-cli \
+    5      --model $(huggingface-downloader mys/ggml_llava-v1.5-13b/ggml-model-q4_k.gguf) \
+    6      --mmproj $(huggingface-downloader mys/ggml_llava-v1.5-13b/mmproj-model-f16.gguf) \
+    7      --n-gpu-layers 999 \
+    8      --image /data/images/lake.jpg'
+    9  git clone https://github.com/dusty-nv/jetson-containers
+   10  bash jetson-containers/install.sh
+   11  jetson-containers run --workdir=/opt/llama.cpp/bin $(autotag llama_cpp:gguf)   /bin/bash -c './llava-cli \
+   12      --model $(huggingface-downloader mys/ggml_llava-v1.5-13b/ggml-model-q4_k.gguf) \
+   13      --mmproj $(huggingface-downloader mys/ggml_llava-v1.5-13b/mmproj-model-f16.gguf) \
+   14      --n-gpu-layers 999 \
+   15      --image /data/images/lake.jpg'
+   16  jetson-containers run --workdir=/opt/llama.cpp/bin $(autotag llama_cpp:gguf)   /bin/bash -c './llava-cli \
+   17      --model $(huggingface-downloader mys/ggml_llava-v1.5-13b/ggml-model-q4_k.gguf) \
+   18      --mmproj $(huggingface-downloader mys/ggml_llava-v1.5-13b/mmproj-model-f16.gguf) \
+   19      --n-gpu-layers 999 \
+   20      --image /data/images/lake.jpg'
+   21  curl -fsSL https://get.docker.com -o get-docker.sh
+   22  sudo apt-get update
+   23  sudo apt-get install ca-certificates curl
+   24  sudo install -m 0755 -d /etc/apt/keyrings
+   25  sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+   26  sudo chmod a+r /etc/apt/keyrings/docker.asc
+   27  echo   "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+   28    $(. /etc/os-release && echo "$VERSION_CODENAME") stable" |   sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+   29  sudo apt-get update
+   30  sudo docker run hello-world
+   31  sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+   32  sudo docker run hello-world
+   33  sudo groupadd docker
+   34  sudo usermod -aG docker $USER
+   35  newgrp docker
+   36  jetson-containers run --workdir=/opt/llama.cpp/bin $(autotag llama_cpp:gguf)   /bin/bash -c './llava-cli \
+   37      --model $(huggingface-downloader mys/ggml_llava-v1.5-13b/ggml-model-q4_k.gguf) \
+   38      --mmproj $(huggingface-downloader mys/ggml_llava-v1.5-13b/mmproj-model-f16.gguf) \
+   39      --n-gpu-layers 999 \
+   40      --image /data/images/lake.jpg'
+   41  sudo apt install nvidia-jetpack
+   42  jetson-containers run --workdir=/opt/llama.cpp/bin $(autotag llama_cpp:gguf)   /bin/bash -c './llava-cli \
+   43      --model $(huggingface-downloader mys/ggml_llava-v1.5-13b/ggml-model-q4_k.gguf) \
+   44      --mmproj $(huggingface-downloader mys/ggml_llava-v1.5-13b/mmproj-model-f16.gguf) \
+   45      --n-gpu-layers 999 \
+   46      --image /data/images/lake.jpg'
+   47  nano /etc/docker/daemon.json 
+   48  sudo apt nano
+   49  sudo apt install nano
+   50  nano /etc/docker/daemon.json 
+   51  jetson-containers run --workdir=/opt/llama.cpp/bin $(autotag llama_cpp:gguf)   /bin/bash -c './llava-cli \
+   52      --model $(huggingface-downloader mys/ggml_llava-v1.5-13b/ggml-model-q4_k.gguf) \
+   53      --mmproj $(huggingface-downloader mys/ggml_llava-v1.5-13b/mmproj-model-f16.gguf) \
+   54      --n-gpu-layers 999 \
+   55      --image /data/images/lake.jpg'
+   56  nano /etc/docker/daemon.json 
+   57  y
+   58  ls
+   59  sudo rm =r models--mys--ggml_llava-v1.5-13b/
+   60  sudo rm -r models--mys--ggml_llava-v1.5-13b/
+   61  nano /etc/docker/daemon.json 
+   62  htop
+   63  sudo apt install htop
+   64  df -h
+   65  docker images
+   66  docker rm cc7237e06a6c cc7237e06a6c
+   67  docker rm cc7237e06a6c cc7237e06a6c -f
+   68  docker images
+   69  docker rm cc7237e06a6c
+   70  docker rm V
+   71  docker rm dustynv/llama_cpp 
+   72  docker images
+   73  docker rmi dustynv/llama_cpp 
+   74  docker rmi cc7237e06a6c
+   75  df =h
+   76  df -h
+   77  docker ps
+   78  nvcc --version
+   79  python
+   80  jetson-containers run --workdir=/opt/llama.cpp/bin $(autotag llama_cpp:gguf)   /bin/bash -c './llava-cli \
+   81      --model $(huggingface-downloader mys/ggml_llava-v1.5-13b/ggml-model-q4_k.gguf) \
+   82      --mmproj $(huggingface-downloader mys/ggml_llava-v1.5-13b/mmproj-model-f16.gguf) \
+   83      --n-gpu-layers 999 \
+   84      --image /data/images/lake.jpg'
+   85  jetson-containers run --workdir=/opt/llama.cpp/bin $(autotag llama_cpp:gguf)   /bin/bash -c './llava-cli \
+   86      --model $(huggingface-downloader mys/ggml_llava-v1.5-13b/ggml-model-q4_k.gguf) \
+   87      --mmproj $(huggingface-downloader mys/ggml_llava-v1.5-13b/mmproj-model-f16.gguf) \
+   88      --n-gpu-layers 999 \
+   89      --image /data/images/lake.jpg'
+   90  cd jetson-containers/
+   91  ls
+   92  cd jetson_containers/
+   93  ls
+   94  cd ..
+   95  cd packages/
+   96  ls
+   97  cd llm/
+   98  ls
+   99  cd nano_llm/
+  100  ls
+  101  cd ..
+  102  ls
+  103  cd data/
+  104  ls
+  105  cd ..
+  106  cd jetson-containers/
+  107  ls
+  108  cd jetson_containers/
+  109  ls
+  110  cd ..
+  111  jetson-containers run --workdir=/opt/llama.cpp/bin $(autotag llama_cpp:gguf)   /bin/bash
+  112  jetson-containers run $(autotag llava)   python3 -m llava.serve.cli     --model-path liuhaotian/llava-v1.5-7b     --image-file /data/images/hoover.jpg
+  113  docker ps
+  114  docker images
+  115  docker rm cc7237e06a6c ee301c921b8a
+  116  df -h
+  117  jetson-containers run $(autotag nano_llm)   python3 -m nano_llm.chat --api=mlc     --model Efficient-Large-Model/VILA1.5-3b     --max-context-len 256     --max-new-tokens 32     --prompt '/data/images/hoover.jpg'     --prompt 'what does the road sign say?'     --prompt 'what kind of environment is it?'     --prompt 'reset'     --prompt '/data/images/lake.jpg'     --prompt 'please describe the scene.'     --prompt 'are there any hazards to be aware of?'
+  118  nvidia
+  119  ls
+  120  python
+  121  ollama
+  122  cd Downloads/
+  123  sudo tar -C /usr -xzf ollama-linux-arm64-jetpack5.tgz ./
+  124  sudo tar -C /usr -xzf ollama-linux-arm64-jetpack5.tgz
+  125  sudo useradd -r -s /bin/false -U -m -d /usr/share/ollama ollama
+  126  sudo usermod -a -G ollama $(whoami)
+  127  sudo nano /etc/systemd/system/ollama.service
+  128  sudo systemctl daemon-reload
+  129  sudo systemctl enable ollama
+  130  sudo systemctl start ollama
+  131  sudo systemctl status ollama
+  132  sudo tar -C /usr -xzf ollama-linux-arm64-jetpack5\(1\).tgz 
+  133  sudo useradd -r -s /bin/false -U -m -d /usr/share/ollama ollama
+  134  sudo systemctl daemon-reload
+  135  sudo systemctl start ollama
+  136  sudo systemctl status 
+  137  ollama
+  138  sudo systemctl start ollama
+  139  sudo systemctl status ollama
+  140  cd ..
+  141  history
+  142  jetson-containers run --name ollama $(autotag ollama)
+  143  df -h
+  144  sudo docker images
+  145  jetson-containers run --name ollama $(autotag ollama)
+  146  htop
+  147  cd ..
+  148  cd Visual_prosthesis/
+  149  ls
+  150  source env/bin/activate
+  151  python main_subclass.py 
+  152  pip install pynput
+  153  sudo add-apt-repository ppa:alex-p/tesseract-ocr5 -y
+  154  nvidia
+  155  sudo add-apt-repository ppa:alex-p/tesseract-ocr5 -y
+  156  sudo apt update
+  157  sudo apt install -y tesseract-ocr tesseract-ocr-eng
+  158  sudo add-apt-repository ppa:alex-p/tesseract-ocr5 -y
+  159  sudo apt update
+  160  sudo apt install -y tesseract-ocr tesseract-ocr-eng
+  161  tesseract --version
+  162  To execute the commands you’ve mentioned with sudo privileges and export the path of Tesseract OCR to your Bash environment, follow these steps:
+  163  1. Run Commands with sudo Privileges
+  164  Here’s the corrected script with sudo for a Jetson or Ubuntu-based system:
+  165  sudo add-apt-repository ppa:alex-p/tesseract-ocr5 -y
+  166  To execute the commands you’ve mentioned with sudo privileges and export the path of Tesseract OCR to your Bash environment, follow these steps:
+  167  1. Run Commands with sudo Privileges
+  168  Here’s the corrected script with sudo for a Jetson or Ubuntu-based system:
+  169  sudo add-apt-repository ppa:alex-p/tesseract-ocr5 -y
+  170  which tesseract
+  171  echo 'export TESSDATA_PREFIX=/usr/share/tesseract-ocr/5/tessdata' >> ~/.bashrc
+  172  source ~/.bashrc
+  173  source env/bin/activate
+  174  python main_subclass.py 
+  175  sudo pip install Jetson.GPIO
+  176  sudo groupadd -f -r gpio
+  177  sudo usermod -a -G gpio paradiso
+  178  sudo cp lib/python/Jetson/GPIO/99-gpio.rules /etc/udev/rules.d/
+  179  python main_subclass.py 
+  180  deactivate
+  181  sudo pip install Jetson.GPIO
+  182  pip list
+  183  source env/bin/activate
+  184  sudo pip install Jetson.GPIO --upgrade
+  185  python main_subclass.py 
+  186  deactivate
+  187  sudo pip install Jetson.GPIO --upgrade
+  188  python
+  189  sudo groupadd -f -r gpio
+  190  sudo usermod -a -G gpio paradiso
+  191  sudo cp lib/python/Jetson/GPIO/99-gpio.rules /etc/udev/rules.d/
+  192  sudo cp venv/lib/pythonNN/site-packages/Jetson/GPIO/99-gpio.rules /etc/udev/rules.d/
+  193  sudo udevadm control --reload-rules && sudo udevadm trigger
+  194  python
+  195  sudo usermod -aG gpio $USER
+  196  sudo chown root.gpio /dev/gpiochip1
+  197  sudo chmod 660 /dev/gpiochip1
+  198  python
+  199  sudo nano /etc/udev/rules.d/99-gpio.rules
+  200  sudo usermod -aG gpio $USER
+  201  python
+  202  reboot
+  203  sudo reboot
+  204  watch -n 2 df -h
+  205  pwd
+  206  cd ..
+  207  df -h
+  208  sudo docker images
+  209  sudo apt remove --purge libreoffice*
+  210  sudo apt autoclean
+  211  history
+  212  jetson-containers run dustynv/ollama:r36.3.0
+  213  cat /etc/nv_tegra_release
+  214  jetson-containers run dustynv/ollama:r36.3.0 ollama run mistral-small
+  215  jetson-containers run dustynv/ollama:r36.3.0 ollama run llava-12b
+  216  jetson-containers run dustynv/ollama:r36.3.0 ollama run llava:13b
+  217  git clone -b ocr_mode https://github.com/BrownVisualProsthesisProject/Visual_prosthesis
+  218  cd Visual_prosthesis/
+  219  python --version
+  220  python -m venv env
+  221  sudo apt install python3.8-venv
+  222  python -m venv env
+  223  source env/bin/activate
+  224  pip install torch
+  225  python
+  226  pip install ../Downloads/torch-2.1.0a0+41361538.nv23.06-cp38-cp38-linux_aarch64.whl
+  227  pip uninstall torch
+  228  pip install ../Downloads/torch-2.1.0a0+41361538.nv23.06-cp38-cp38-linux_aarch64.whl
+  229  python
+  230  sudo apt-get install python3-pip libopenblas-base libopenmpi-dev libomp-dev
+  231  python
+  232  lsblk
+  233  cd ..
+  234  cd jetson-containers/
+  235  sudo mkdir -p data
+  236  sudo mount /dev/mmcblk1p1 data
+  237  sudo nano /etc/fstab 
+  238  sudo mount -a
+  239  sudo docker images
+  240  sudo docker rmi d92f52d4c4a7
+  241  history
+  242  jetson-containers run --name ollama $(autotag ollama)
+  243  jetson-containers run dustynv/ollama:r36.3.0 --name ollama $(autotag ollama)
+  244  jetson-containers run dustynv/ollama:r36.3.0
+  245  history

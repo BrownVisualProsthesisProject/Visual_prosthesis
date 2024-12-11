@@ -205,11 +205,11 @@ def format_prices(text):
     return formatted_text
 
 def generate_and_process_response(model, prompt, classifier, question, vlm=False):
-
+    print("AQUIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII")
     if vlm:
         response = ollama.chat(model=model,
                 messages=[
-                    {"role": "user", "content": "answer this: Is the phone to the left or to the right in the image? ", "images": [prompt]}
+                    {"role": "user", "content": "Describe this image ", "images": [prompt]}
                 ], stream=True
             )
     else:
@@ -305,7 +305,7 @@ def voice_control_mode(voice_mode):
             closest_match = obj["close"]
             qa_flag = obj.get("qa", False)
             vlm = obj.get("vlm", False)
-
+            
             if closest_match:
                 system.say_sentence("finishing")
                 time.sleep(1.5)
@@ -323,7 +323,7 @@ def voice_control_mode(voice_mode):
                 # Process the response
                 generate_and_process_response('mistral-small', prompt, classifier, False)
             else:
-                generate_and_process_response('llava:13b', raw_ocr, classifier, False, vlm=True)
+                generate_and_process_response('llava-llama3', raw_ocr, classifier, False, vlm=True)
 
             
 

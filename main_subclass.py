@@ -57,9 +57,10 @@ def choose_mode(currentKey):
                         bufsize=0)
             audio_stream = subprocess.Popen([python_version, 'Modes/ocr_sound.py', "--approach", "1"]) #type 3
         elif currentKey == "3":
+            audio_stream = subprocess.Popen([python_version, 'Modes/ocr_sound.py', "--approach", "2"]) #type 3
             current_stream = subprocess.Popen([python_version, 'Modes/ocr_tess.py'],
                         bufsize=0)
-            audio_stream = subprocess.Popen([python_version, 'Modes/ocr_sound.py', "--approach", "2"]) #type 3
+            
 
     elif currentKey == "3" or currentKey == "4" or currentKey == "5" :
 

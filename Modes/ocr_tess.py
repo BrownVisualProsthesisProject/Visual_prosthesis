@@ -18,6 +18,9 @@ import tesserocr
 import re
 from PIL import Image
 from datetime import datetime
+import numpy as np
+import matplotlib.pyplot as plt
+import pickle
 
 os.environ['TESSDATA_PREFIX'] = "/usr/share/tesseract-ocr/5/tessdata/"
 
@@ -174,17 +177,19 @@ if __name__ == "__main__":
                 else:
 
                     image_pil = Image.fromarray(frameRgb)
+
                     ocr_text = tesserocr.image_to_text(image_pil)
+
                     
                     if key == ord('u'):
                         send_data(locate_socket, ocr_text, False, qa=True)
                     else:
                         send_data(locate_socket, ocr_text, False)
                         print(ocr_text)
-                cv2.imshow("capture", cv2.resize(frameRgb, (0, 0), fx=.5, fy=.5))
+                cv2.imshow("capture", cv2.resize(frameRgb, (0, 0), fx=.8, fy=.8))
                 aux = False
                 
-            cv2.imshow("framergb", cv2.resize(frameRgb, (0, 0), fx=.5, fy=.5))
+            cv2.imshow("framergb", cv2.resize(frameRgb, (0, 0), fx=.8, fy=.8))
             
             
             key = cv2.waitKey(1)
